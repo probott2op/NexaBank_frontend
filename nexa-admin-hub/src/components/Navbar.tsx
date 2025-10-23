@@ -1,7 +1,9 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { LogOut, User } from "lucide-react";
 import nexaLogo from "@/assets/nexa-logo.png";
+import { authAPI } from "@/services/api";
+import { useToast } from "@/hooks/use-toast";
 
 interface NavbarProps {
   isAuthenticated: boolean;
@@ -11,6 +13,27 @@ interface NavbarProps {
 
 export const Navbar = ({ isAuthenticated, userRole, onLogout }: NavbarProps) => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  
+  const handleLogout = async () => {
+    try {
+      // Call logout API
+      await authAPI.logout();
+      
+      toast({
+        title: "Logged Out",
+        description: "You have been successfully logged out",
+      });
+    } catch (error) {
+      console.error('Logout API failed:', error);
+      // Continue with logout even if API fails
+    } finally {
+      // Clear local state and redirect
+      onLogout();
+      navigate('/');
+    }
+  };
   
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -37,7 +60,7 @@ export const Navbar = ({ isAuthenticated, userRole, onLogout }: NavbarProps) => 
                   {userRole === "admin" ? "Admin Panel" : "Dashboard"}
                 </Button>
               </Link>
-              <Button variant="ghost" onClick={onLogout} className="gap-2">
+              <Button variant="ghost" onClick={handleLogout} className="gap-2">
                 <LogOut className="h-4 w-4" />
                 Logout
               </Button>

@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, Wallet, Clock, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { customerAPI, fdAPI } from "@/services/api";
+import { fdAccountAPI, tokenManager } from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
 
 const UserDashboard = () => {
@@ -16,25 +16,37 @@ const UserDashboard = () => {
     const fetchUserData = async () => {
       try {
         setLoading(true);
-        // Get userId from localStorage (set during login)
-        const userId = localStorage.getItem('userId');
         
-        if (!userId) {
+        // Get user info from token
+        const userInfo = tokenManager.getUserInfo();
+        
+        if (!userInfo || !userInfo.userId) {
           toast({
             title: "Error",
-            description: "User ID not found. Please login again.",
+            description: "User information not found. Please login again.",
             variant: "destructive",
           });
           return;
         }
 
-        // Fetch profile from customer API
-        const profileData = await customerAPI.getProfileByUserId(userId);
-        setProfile(profileData);
-
-        // Fetch FD accounts using userId
+        // Try to get current user info from FD Account API
         try {
-          const fdData = await fdAPI.searchAccounts('userId', userId);
+          const userData = await fdAccountAPI.getCurrentUser();
+          setProfile(userData);
+        } catch (error) {
+          console.log('Using user info from token');
+          // Use token info as fallback
+          setProfile({
+            userId: userInfo.userId,
+            email: userInfo.email,
+            firstName: userInfo.email.split('@')[0],
+            lastName: '',
+          });
+        }
+
+        // Fetch FD accounts using customerId
+        try {
+          const fdData = await fdAccountAPI.searchAccounts({ customerId: userInfo.userId });
           setFdAccounts(Array.isArray(fdData) ? fdData : []);
         } catch (fdError) {
           console.error('Failed to fetch FD accounts:', fdError);

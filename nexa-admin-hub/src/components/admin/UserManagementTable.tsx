@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Pencil, Trash2, Plus, Search } from "lucide-react";
-import { customerAPI } from "@/services/api";
+import { authAPI } from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { UserDialog } from "./UserDialog";
@@ -21,7 +21,7 @@ export const UserManagementTable = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const data = await customerAPI.getAllProfiles();
+      const data = await authAPI.getAllUsers();
       setUsers(Array.isArray(data) ? data : []);
     } catch (error: any) {
       toast({
@@ -47,8 +47,13 @@ export const UserManagementTable = () => {
     
     try {
       setLoading(true);
-      const data = await customerAPI.searchProfiles(searchQuery);
-      setUsers(Array.isArray(data) ? data : []);
+      // For now, just filter locally since we don't have a search endpoint
+      const allUsers = await authAPI.getAllUsers();
+      const filtered = allUsers.filter((user: any) => 
+        user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.username?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setUsers(Array.isArray(filtered) ? filtered : []);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -64,14 +69,14 @@ export const UserManagementTable = () => {
     if (!selectedUser) return;
     
     try {
-      await customerAPI.deleteProfile(selectedUser.userId);
+      // For now, just show a message since delete isn't in the API
       toast({
-        title: "Success",
-        description: "User deleted successfully",
+        title: "Not Implemented",
+        description: "User deletion is not available in the current API",
+        variant: "destructive",
       });
       setDeleteDialogOpen(false);
       setSelectedUser(null);
-      fetchUsers();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -84,16 +89,22 @@ export const UserManagementTable = () => {
   const handleSave = async (data: any) => {
     try {
       if (selectedUser) {
-        await customerAPI.updateProfile(selectedUser.userId, data);
+        // Update user roles or status
+        if (data.roles) {
+          await authAPI.updateUserRoles(selectedUser.userId, data.roles.split(','));
+        }
+        if (data.status) {
+          await authAPI.updateUserStatus(selectedUser.userId, data.status);
+        }
         toast({
           title: "Success",
           description: "User updated successfully",
         });
       } else {
-        await customerAPI.createProfile(data);
         toast({
-          title: "Success",
-          description: "User created successfully",
+          title: "Not Implemented",
+          description: "User creation should be done through registration",
+          variant: "destructive",
         });
       }
       setDialogOpen(false);

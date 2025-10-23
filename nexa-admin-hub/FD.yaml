@@ -1,0 +1,1071 @@
+openapi: 3.0.1
+info:
+  title: Fixed Deposit Account Management API
+  description: |
+    # Comprehensive Fixed Deposit Account Management System
+
+    ## Overview
+    Enterprise-grade RESTful API for managing Fixed Deposit (FD) accounts in banking and financial institutions.
+    This system provides complete lifecycle management for FD accounts including account creation, holder management,
+    transaction processing, maturity handling, and comprehensive reporting capabilities.
+
+    ## Key Features
+    - **Account Management**: Create, retrieve, update, and search FD accounts with complete configuration
+    - **Multi-Holder Support**: Add owners, co-owners, nominees, and guardians to accounts
+    - **Transaction Processing**: Handle deposits, interest accrual, premature withdrawals with penalty calculation
+    - **Automated Maturity**: Batch job processing for matured accounts with configurable payout instructions
+    - **Interest Calculation**: Support for simple and compound interest with configurable compounding frequency
+    - **Product Integration**: Dynamic configuration from Product & Pricing Service for balances, roles, transactions
+    - **Real-time Events**: Kafka-based event streaming for account creation, maturity, and closure
+    - **Communication Management**: Multi-channel notifications (Email, SMS, Push) based on product configuration
+    - **JWT Security**: Stateless authentication with RSA public key validation
+    - **Comprehensive Reporting**: Excel export with account holder details and transaction history
+
+    ## API Design Principles
+    - **RESTful Architecture**: Standard HTTP methods (GET, POST, PUT, DELETE)
+    - **JWT Authentication**: Stateless security with customer ID extraction from token
+    - **External Service Integration**: Seamless integration with Auth, Calculation, and Product services
+    - **Event-Driven Architecture**: Kafka events for account lifecycle and communications
+    - **Pagination Support**: Efficient data retrieval for large datasets
+    - **Comprehensive Validation**: Request validation using Jakarta Bean Validation
+    - **Audit Trail**: Automatic tracking of transactions and account changes
+    - **Error Handling**: Standardized error responses with meaningful messages
+
+    ## Response Codes
+    - **200 OK**: Successful GET/PUT request
+    - **201 Created**: Successful POST request with resource creation
+    - **204 No Content**: Successful DELETE request
+    - **400 Bad Request**: Invalid request data or validation failure
+    - **401 Unauthorized**: Missing or invalid JWT token
+    - **403 Forbidden**: Valid token but insufficient permissions
+    - **404 Not Found**: Resource not found
+    - **409 Conflict**: Business rule violation or duplicate resource
+    - **500 Internal Server Error**: Server-side error
+
+    ## Authentication
+    All API endpoints require JWT authentication. Include the JWT token in the Authorization header:
+    ```
+    Authorization: Bearer <your-jwt-token>
+    ```
+
+    The JWT token must contain:
+    - **sub**: Customer ID (extracted for account operations)
+    - **iat**: Issued at timestamp
+    - **exp**: Expiration timestamp
+
+    JWT tokens are validated using RSA public key obtained from: `http://localhost:3020/api/auth/public-key`
+
+    ## External Service Dependencies
+
+    ### 1. Authentication Service
+    - **URL**: `http://localhost:3020`
+    - **Purpose**: JWT public key provider for token validation
+    - **Endpoint**: `/api/auth/public-key`
+
+    ### 2. FD Calculation Service
+    - **URL**: `http://localhost:4030`
+    - **Purpose**: Calculate maturity values, interest rates, and payout schedules
+    - **Endpoint**: `/api/fd/calculations/{calcId}`
+
+    ### 3. Product & Pricing Service
+    - **URL**: `http://localhost:8080`
+    - **Purpose**: Product configuration including balances, roles, transactions, communications
+    - **Endpoint**: `/api/products/{productCode}`
+
+    ## Kafka Topics
+    - **fd.account.created**: Published when new FD account is created
+    - **fd.account.matured**: Published when FD account reaches maturity
+    - **fd.account.closed**: Published when FD account is closed (premature or matured)
+    - **fd.communication**: Published for customer communications (Email, SMS, Push notifications)
+
+    ## Data Flow
+
+    ### Account Creation Flow
+    1. User provides JWT token (containing customer ID) and calculation ID
+    2. System extracts customer ID from JWT token's 'sub' claim
+    3. System calls FD Calculation Service to get maturity details
+    4. System calls Product Service to get product configuration
+    5. System creates FD account with calculated values
+    6. System creates balance types (FD_PRINCIPAL, FD_INTEREST, PENALTY) from product config
+    7. System publishes account creation event to Kafka
+    8. System sends communication events (Email/SMS) based on product templates
+    9. System returns created account details
+
+    ### Premature Withdrawal Flow
+    1. User requests withdrawal inquiry or performs withdrawal
+    2. System validates transaction type against product configuration
+    3. System calculates term completion percentage
+    4. System determines penalty rate:
+       - If < 50% completion: Uses PEN-H-{productSuffix} (high penalty)
+       - If >= 50% completion: Uses PEN-L-{productSuffix} (low penalty)
+    5. System calculates final payout amount
+    6. If performing withdrawal: Creates penalty and withdrawal transactions
+    7. System publishes account closure event
+    8. System returns final payout details
+
+    ## Product-Driven Configuration
+
+    This API leverages product configuration from the Product & Pricing Service to enable:
+
+    ### Balance Types
+    Different FD products may have different balance types:
+    - **FD_PRINCIPAL**: Principal deposit amount
+    - **FD_INTEREST**: Accrued interest amount
+    - **PENALTY**: Penalty charges for premature withdrawal
+
+    ### Role Types
+    Products define which roles are allowed:
+    - **OWNER**: Primary account owner
+    - **CO_OWNER**: Joint account owner
+    - **NOMINEE**: Designated beneficiary
+    - **GUARDIAN**: Legal guardian for minor accounts
+
+    ### Transaction Types
+    Products define allowed transactions:
+    - **DEPOSIT**: Principal deposit
+    - **WITHDRAWAL**: Premature withdrawal
+    - **INTEREST_ACCRUED**: Automatic interest posting
+    - **PENALTY_DEBIT**: Penalty charges
+
+    ### Communication Templates
+    Products define customer notifications:
+    - **COMM_OPENING**: Account opening confirmation (SMS/Email)
+    - **COMM_MONTHLY_STATEMENT**: Monthly statements (Email)
+    - **COMM_MATURITY_REMINDER**: Maturity date reminders (SMS/Email)
+    - **COMM_INTEREST_CREDIT**: Interest posting notifications
+
+    ### Penalty Charges
+    Products define penalty structures:
+    - **PEN-H-{suffix}**: High penalty for < 50% term completion
+    - **PEN-L-{suffix}**: Low penalty for >= 50% term completion
+    - Supports **PERCENTAGE** (% of principal) or **FLAT** (fixed amount)
+
+    ## Batch Processing
+
+    ### Interest Calculation Job
+    - **Schedule**: Daily at 00:01
+    - **Purpose**: Calculate and credit daily interest to FD accounts
+    - **Processing**: Iterates through all ACTIVE accounts and posts interest
+
+    ### Maturity Processing Job
+    - **Schedule**: Daily at 00:05
+    - **Purpose**: Process matured FD accounts
+    - **Actions**:
+      - Update account status to MATURED
+      - Apply maturity instructions (RENEW, PAYOUT, TRANSFER)
+      - Publish maturity events to Kafka
+
+    ## Getting Started
+    1. Obtain JWT token from Authentication Service
+    2. Create FD calculation using Calculation Service
+    3. Use calculation ID to create FD account via this API
+    4. Add additional account holders if needed
+    5. Monitor account via transaction history
+    6. Handle maturity or premature withdrawal
+
+    ## Support
+    For technical support, API access requests, or documentation:
+    - **Email**: api-support@nexusbank.com
+    - **Developer Portal**: https://www.nexusbank.com/developers
+    - **Status Page**: https://status.nexusbank.com
+
+    ## Changelog
+    - **v1.0.0** (2025-10-22): Initial release with comprehensive FD management
+  contact:
+    name: Nexus Bank Development Team
+    url: https://www.nexusbank.com/developer-support
+    email: api-support@nexusbank.com
+  license:
+    name: Apache License 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+    description: Local Development Server
+  - url: https://api-uat.nexusbank.com
+    description: User Acceptance Testing Environment
+  - url: https://api.nexusbank.com
+    description: Production Environment
+security:
+  - Bearer Authentication: []
+tags:
+  - name: FD Account Management
+    description: |
+      Comprehensive API for managing Fixed Deposit (FD) accounts throughout their complete lifecycle.
+
+      ## Core Features
+      - **Account Creation**: Create FD accounts with dynamic product configuration
+      - **Account Holder Management**: Add owners, co-owners, nominees, guardians
+      - **Transaction History**: View complete transaction timeline
+      - **Premature Withdrawal**: Calculate penalties and process early closures
+      - **Search & Retrieval**: Find accounts by multiple criteria
+
+      ## Account Creation Process
+      1. User obtains JWT token from Authentication Service (contains customer ID in 'sub' claim)
+      2. User creates FD calculation via Calculation Service (returns calcId)
+      3. User calls POST /api/v1/accounts with JWT token and calcId
+      4. System extracts customer ID from JWT token automatically
+      5. System fetches calculation details (maturity date, interest rate, product code)
+      6. System fetches product configuration (balances, roles, communications)
+      7. System creates account with all balance types (FD_PRINCIPAL, FD_INTEREST, PENALTY)
+      8. System publishes events to Kafka (account creation, communications)
+      9. System returns created account details
+
+      ## Role Management
+      Products define which roles are allowed. Common roles:
+      - **OWNER**: Primary account owner (required, from JWT)
+      - **CO_OWNER**: Joint account owner
+      - **NOMINEE**: Beneficiary designation
+      - **GUARDIAN**: For minor accounts
+
+      ## Transaction Types
+      All transactions are tracked with:
+      - Transaction type (DEPOSIT, WITHDRAWAL, INTEREST_ACCRUED, PENALTY_DEBIT)
+      - Amount and date
+      - Transaction reference (UUID)
+      - Description
+
+      ## Search Capabilities
+      Find accounts by:
+      - **accountNumber**: Exact account number match
+      - **customerId**: All accounts for a customer
+      - **productCode**: All accounts for a product type
+
+      ## Authentication
+      All endpoints require JWT Bearer token in Authorization header.
+      Customer ID is automatically extracted from token's 'sub' claim.
+  - name: Authentication
+    description: Authentication verification and user info endpoints
+  - name: FD Reports
+    description: APIs for generating Fixed Deposit reports and analytics
+  - name: Batch Jobs
+    description: APIs for manually triggering batch processing jobs
+paths:
+  /api/v1/jobs/run/maturity-processing:
+    post:
+      tags:
+        - Batch Jobs
+      summary: Run maturity processing job
+      description: Manually trigger the batch job to process maturing FD accounts and execute maturity instructions
+      operationId: runMaturityProcessingJob
+      responses:
+        '200':
+          description: Maturity processing job started successfully
+          content:
+            '*/*':
+              schema:
+                type: string
+        '500':
+          description: Failed to start the job
+          content:
+            '*/*':
+              schema:
+                type: string
+  /api/v1/jobs/run/interest-calculation:
+    post:
+      tags:
+        - Batch Jobs
+      summary: Run interest calculation job
+      description: Manually trigger the batch job to calculate interest for all active FD accounts
+      operationId: runInterestCalculationJob
+      responses:
+        '200':
+          description: Interest calculation job started successfully
+          content:
+            '*/*':
+              schema:
+                type: string
+        '500':
+          description: Failed to start the job
+          content:
+            '*/*':
+              schema:
+                type: string
+  /api/v1/accounts:
+    post:
+      tags:
+        - FD Account Management
+      summary: Create a new Fixed Deposit account
+      description: |
+        Create a new Fixed Deposit account with comprehensive configuration from external services.
+
+        **What This Endpoint Does:**
+        1. Extracts customer ID from JWT token's 'sub' claim (automatic, no manual input needed)
+        2. Fetches calculation details from FD Calculation Service using calcId
+        3. Fetches product configuration from Product & Pricing Service
+        4. Creates FD account with calculated maturity values
+        5. Creates balance types based on product configuration (FD_PRINCIPAL, FD_INTEREST, PENALTY)
+        6. Publishes account creation event to Kafka
+        7. Sends communication events (Email/SMS) based on product templates
+        8. Returns complete account details
+
+        **Request Body:**
+        - `accountName`: Display name for the account (e.g., "My Retirement Fund")
+        - `calcId`: Calculation ID from FD Calculation Service (obtained from /api/fd/calculations)
+
+        **JWT Token Requirements:**
+        - Must contain 'sub' claim with customer ID
+        - Must be valid and not expired
+        - Obtained from Authentication Service at http://localhost:3020
+
+        **External Service Calls:**
+        This endpoint integrates with:
+        1. **FD Calculation Service** (http://localhost:4030)
+           - Fetches: maturity value, maturity date, interest rates, product code
+        2. **Product & Pricing Service** (http://localhost:8080)
+           - Fetches: balance types, allowed roles, transaction types, communication templates, penalty charges
+
+        **What Gets Created:**
+        - FD Account entity with all details
+        - Account holder entry (OWNER role) using customer ID from JWT
+        - Initial deposit transaction (PRINCIPAL_DEPOSIT)
+        - Multiple balance entries:
+          * FD_PRINCIPAL: Set to principal amount
+          * FD_INTEREST: Initialized to 0
+          * PENALTY: Initialized to 0
+
+        **Kafka Events Published:**
+        - **fd.account.created**: Account creation notification
+        - **fd.communication**: Customer notifications (based on product config)
+          * COMM_OPENING event via SMS/Email
+          * Uses templates from product configuration
+          * Variables substituted: ${CUSTOMER_NAME}, ${ACCOUNT_NUMBER}, ${DATE}, etc.
+
+        **Use Cases:**
+
+        **Scenario 1: Standard FD Account Creation**
+        - Customer completes FD calculation in UI
+        - Receives calcId: 12345
+        - Calls this endpoint with accountName and calcId
+        - System creates account with customer as OWNER
+        - Customer receives SMS/Email confirmation
+
+        **Scenario 2: Multiple Accounts for Same Customer**
+        - Customer already has one FD account
+        - Creates another calculation for different term/amount
+        - Calls endpoint with new calcId
+        - System creates second account linked to same customer ID
+
+        **Scenario 3: Product-Specific Configuration**
+        - Different products (FD001, FD002) have different:
+          * Balance types
+          * Communication templates
+          * Penalty structures
+        - System automatically applies correct configuration
+
+        **Related Endpoints:**
+        - POST /api/fd/calculations - Create calculation first to get calcId
+        - GET /api/products/{code} - View product configuration
+        - GET /api/v1/accounts/search - Find created accounts
+        - POST /api/v1/accounts/{accountNumber}/roles - Add co-owners/nominees
+
+        **Error Scenarios:**
+        - **400 Bad Request**: Invalid calcId or calculation not found
+        - **401 Unauthorized**: Missing or invalid JWT token
+        - **404 Not Found**: Product not found for product code from calculation
+        - **500 Internal Error**: External service unavailable (Calculation or Product Service)
+
+        **Example Request:**
+        ```json
+        POST /api/v1/accounts
+        Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...
+
+        {
+          "accountName": "My Retirement FD",
+          "calcId": 12345
+        }
+        ```
+
+        **Example Response:**
+        ```json
+        {
+          "accountNumber": "FD202510220001",
+          "accountName": "My Retirement FD",
+          "productCode": "FD001",
+          "status": "ACTIVE",
+          "principalAmount": 100000.00,
+          "maturityAmount": 108500.00,
+          "interestRate": 8.0,
+          "termInMonths": 12,
+          "effectiveDate": "2025-10-22",
+          "maturityDate": "2026-10-22",
+          "accountHolders": [
+            {
+              "customerId": "CUST123456",
+              "roleType": "OWNER",
+              "ownershipPercentage": 100.00
+            }
+          ]
+        }
+        ```
+
+        **Important Notes:**
+        - Customer ID is NEVER in request body - always extracted from JWT
+        - Product code comes from calculation service - not in request
+        - Interest rate, term, maturity details from calculation service
+        - Balance types created automatically based on product configuration
+        - This is an asynchronous operation - Kafka events published after response
+      operationId: createFdAccount
+      requestBody:
+        description: |
+          Account creation request containing:
+          - **accountName**: Display name for the account (3-100 characters)
+          - **calcId**: Calculation ID from FD Calculation Service (positive integer)
+
+          **Note**: Customer ID is automatically extracted from JWT token's 'sub' claim.
+          Do NOT include customer ID in request body.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFDAccountRequest'
+        required: true
+      responses:
+        '201':
+          description: Account created successfully with all balances and events published
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/FDAccountView'
+        '400':
+          description: 'Invalid input: calcId not found or invalid accountName'
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/FDAccountView'
+        '401':
+          description: 'Unauthorized: Invalid or missing JWT token'
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/FDAccountView'
+        '404':
+          description: Product not found for product code from calculation
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/FDAccountView'
+        '500':
+          description: 'Internal server error: External service unavailable'
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/FDAccountView'
+  /api/v1/accounts/{accountNumber}/withdrawal:
+    post:
+      tags:
+        - FD Account Management
+      summary: Perform early withdrawal
+      description: Execute premature withdrawal and close the FD account
+      operationId: performEarlyWithdrawal
+      parameters:
+        - name: accountNumber
+          in: path
+          description: FD Account number
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EarlyWithdrawlRequest'
+        required: true
+      responses:
+        '200':
+          description: Early withdrawal completed successfully
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/FDAccountView'
+        '400':
+          description: Invalid withdrawal request
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/FDAccountView'
+        '404':
+          description: Account not found
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/FDAccountView'
+  /api/v1/accounts/{accountNumber}/roles:
+    post:
+      tags:
+        - FD Account Management
+      summary: Add account holder role
+      description: Add a new account holder with a specific role to an existing FD account
+      operationId: addRoleToAccount
+      parameters:
+        - name: accountNumber
+          in: path
+          description: FD Account number
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddAccountHolderRequest'
+        required: true
+      responses:
+        '200':
+          description: Role added successfully
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/FDAccountView'
+        '400':
+          description: Invalid request
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/FDAccountView'
+        '404':
+          description: Account not found
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/FDAccountView'
+  /api/v1/reports/accounts/maturing:
+    get:
+      tags:
+        - FD Reports
+      summary: Get maturing accounts
+      description: Retrieve all active FD accounts that are maturing within a specified number of days from now
+      operationId: getMaturingAccounts
+      parameters:
+        - name: days
+          in: query
+          description: Number of days to look ahead for maturing accounts
+          required: true
+          schema:
+            type: integer
+            format: int32
+          example: 7
+      responses:
+        '200':
+          description: Maturing accounts retrieved successfully
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FDAccountView'
+        '204':
+          description: No maturing accounts found
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FDAccountView'
+  /api/v1/reports/accounts/created:
+    get:
+      tags:
+        - FD Reports
+      summary: Get accounts created between dates
+      description: Retrieve all FD accounts created within a specified date range
+      operationId: getCreatedAccounts
+      parameters:
+        - name: startDate
+          in: query
+          description: 'Start date (ISO format: yyyy-MM-dd)'
+          required: true
+          schema:
+            type: string
+            format: date
+          example: '2025-01-01'
+        - name: endDate
+          in: query
+          description: 'End date (ISO format: yyyy-MM-dd)'
+          required: true
+          schema:
+            type: string
+            format: date
+          example: '2025-12-31'
+      responses:
+        '200':
+          description: Accounts retrieved successfully
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FDAccountView'
+        '204':
+          description: No accounts found in the date range
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FDAccountView'
+  /api/v1/reports/accounts/closed:
+    get:
+      tags:
+        - FD Reports
+      summary: Get closed accounts
+      description: Retrieve all FD accounts closed within a specified date range, optionally filtered by status
+      operationId: getClosedAccounts
+      parameters:
+        - name: startDate
+          in: query
+          description: 'Start date (ISO format: yyyy-MM-dd)'
+          required: true
+          schema:
+            type: string
+            format: date
+          example: '2025-01-01'
+        - name: endDate
+          in: query
+          description: 'End date (ISO format: yyyy-MM-dd)'
+          required: true
+          schema:
+            type: string
+            format: date
+          example: '2025-12-31'
+        - name: status
+          in: query
+          description: Optional status filter (e.g., CLOSED, MATURED)
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Closed accounts retrieved successfully
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FDAccountView'
+        '204':
+          description: No closed accounts found
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FDAccountView'
+  /api/v1/auth/verify:
+    get:
+      tags:
+        - Authentication
+      summary: Verify authentication
+      description: Simple endpoint to verify that JWT authentication is working correctly
+      operationId: verifyAuthentication
+      responses:
+        '200':
+          description: Authentication verified successfully
+          content:
+            '*/*':
+              schema:
+                type: object
+                additionalProperties:
+                  type: object
+        '401':
+          description: Unauthorized - Invalid or missing JWT token
+          content:
+            '*/*':
+              schema:
+                type: object
+                additionalProperties:
+                  type: object
+      security:
+        - Bearer Authentication: []
+  /api/v1/auth/me:
+    get:
+      tags:
+        - Authentication
+      summary: Get current user information
+      description: Returns information about the currently authenticated user from the JWT token
+      operationId: getCurrentUser
+      responses:
+        '200':
+          description: User information retrieved successfully
+          content:
+            '*/*':
+              schema:
+                type: object
+                additionalProperties:
+                  type: object
+        '401':
+          description: Unauthorized - Invalid or missing JWT token
+          content:
+            '*/*':
+              schema:
+                type: object
+                additionalProperties:
+                  type: object
+      security:
+        - Bearer Authentication: []
+  /api/v1/accounts/{accountNumber}/withdrawal-inquiry:
+    get:
+      tags:
+        - FD Account Management
+      summary: Get premature withdrawal inquiry
+      description: Get details about penalties and amounts for premature withdrawal
+      operationId: getWithdrawalInquiry
+      parameters:
+        - name: accountNumber
+          in: path
+          description: FD Account number
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Inquiry details retrieved successfully
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/PrematureWithdrawalInquiryResponse'
+        '404':
+          description: Account not found
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/PrematureWithdrawalInquiryResponse'
+  /api/v1/accounts/{accountNumber}/transactions:
+    get:
+      tags:
+        - FD Account Management
+      summary: Get account transactions
+      description: Retrieve all transactions for a specific FD account
+      operationId: getAccountTransactions
+      parameters:
+        - name: accountNumber
+          in: path
+          description: FD Account number
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Transactions retrieved successfully
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FDTransactionView'
+        '404':
+          description: Account not found
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FDTransactionView'
+  /api/v1/accounts/search:
+    get:
+      tags:
+        - FD Account Management
+      summary: Search for FD accounts by various criteria
+      description: |
+        Flexible search API to find FD accounts using different identification types and values.
+
+        **Supported Search Types:**
+
+        1. **accountNumber** - Find specific account by account number
+           - Returns: Single account (or empty if not found)
+           - Use case: Customer inquiry, account lookup
+           - Example: idType=accountNumber&value=FD202510220001
+
+        2. **customerId** - Find all accounts for a customer
+           - Returns: List of all FD accounts owned/associated with customer
+           - Use case: Customer portfolio view, relationship manager dashboard
+           - Example: idType=customerId&value=CUST123456
+
+        3. **productCode** - Find all accounts for a product type
+           - Returns: All accounts using specific product
+           - Use case: Product performance analysis, bulk operations
+           - Example: idType=productCode&value=FD001
+
+        **Response Details:**
+        Each account in response includes:
+        - Complete account details (number, name, status, amounts)
+        - All account holders with roles and ownership percentages
+        - Product information
+        - Maturity details
+        - Current balances (if applicable)
+
+        **Use Cases:**
+
+        **Scenario 1: Customer Service Representative Lookup**
+        - Customer calls with account number
+        - Rep searches: idType=accountNumber&value=FD202510220001
+        - Gets complete account details instantly
+        - Can view holders, transactions, status
+
+        **Scenario 2: Customer Portfolio View**
+        - Customer logs into internet banking
+        - System searches: idType=customerId&value=<from JWT>
+        - Returns all FD accounts for customer
+        - Shows total holdings, maturity dates
+
+        **Scenario 3: Product Manager Analytics**
+        - Product manager wants FD001 performance
+        - Searches: idType=productCode&value=FD001
+        - Gets all FD001 accounts
+        - Analyzes total deposits, average terms
+
+        **Scenario 4: Relationship Manager Dashboard**
+        - RM manages multiple customers
+        - Searches each customer's accounts
+        - Builds comprehensive portfolio view
+        - Monitors maturity schedules
+
+        **Search Tips:**
+        - Account numbers are case-sensitive
+        - Customer IDs must match exactly
+        - Product codes are case-sensitive
+        - Empty result returns 404 Not Found
+        - Large result sets returned in single response (no pagination yet)
+
+        **Related Endpoints:**
+        - POST /api/v1/accounts - Create new account
+        - GET /api/v1/accounts/{accountNumber}/transactions - View account transactions
+        - POST /api/v1/accounts/{accountNumber}/roles - Add account holders
+
+        **Performance Considerations:**
+        - Account number search: O(1) - indexed lookup
+        - Customer ID search: O(n) - filtered scan, consider pagination for large datasets
+        - Product code search: O(n) - filtered scan
+
+        **Example Requests:**
+        ```
+        # Find specific account
+        GET /api/v1/accounts/search?idType=accountNumber&value=FD202510220001
+
+        # Find all customer accounts
+        GET /api/v1/accounts/search?idType=customerId&value=CUST123456
+
+        # Find all accounts for product
+        GET /api/v1/accounts/search?idType=productCode&value=FD001
+        ```
+
+        **Example Response (Customer ID search):**
+        ```json
+        [
+          {
+            "accountNumber": "FD202510220001",
+            "accountName": "My Retirement FD",
+            "productCode": "FD001",
+            "status": "ACTIVE",
+            "principalAmount": 100000.00,
+            "maturityAmount": 108500.00
+          },
+          {
+            "accountNumber": "FD202510220002",
+            "accountName": "Emergency Fund FD",
+            "productCode": "FD002",
+            "status": "ACTIVE",
+            "principalAmount": 50000.00,
+            "maturityAmount": 53250.00
+          }
+        ]
+        ```
+      operationId: findAccounts
+      parameters:
+        - name: idType
+          in: query
+          description: |
+            Type of identifier to search by. Supported values:
+            - **accountNumber**: Search by exact account number
+            - **customerId**: Find all accounts for a customer
+            - **productCode**: Find all accounts using a product
+          required: true
+          schema:
+            type: string
+          example: customerId
+        - name: value
+          in: query
+          description: Value of the identifier to search for. Must match the idType selected.
+          required: true
+          schema:
+            type: string
+          example: CUST123456
+      responses:
+        '200':
+          description: Accounts found successfully. Returns list of matching accounts.
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FDAccountView'
+        '400':
+          description: 'Invalid search parameters: unsupported idType or missing value'
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FDAccountView'
+        '401':
+          description: 'Unauthorized: Missing or invalid JWT token'
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FDAccountView'
+        '404':
+          description: No accounts found matching search criteria
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FDAccountView'
+components:
+  schemas:
+    CreateFDAccountRequest:
+      required:
+        - accountName
+        - calcId
+      type: object
+      properties:
+        accountName:
+          type: string
+          description: Name of the FD account
+          example: My Savings FD
+        calcId:
+          type: integer
+          description: Calculation ID from FD calculation service
+          format: int64
+          example: 123
+      description: Request object for creating a new Fixed Deposit account
+    AccountHolderView:
+      type: object
+      properties:
+        customerId:
+          type: string
+        roleType:
+          type: string
+          enum:
+            - OWNER
+            - CO_OWNER
+            - NOMINEE
+            - GUARDIAN
+        ownershipPercentage:
+          type: number
+      description: List of account holders and their roles
+    FDAccountView:
+      type: object
+      properties:
+        accountNumber:
+          type: string
+          description: Unique account number
+          example: FD2025001234
+        accountName:
+          type: string
+          description: Name of the FD account
+          example: My Savings FD
+        productCode:
+          type: string
+          description: Product code
+          example: FD-REGULAR-01
+        status:
+          type: string
+          description: Current status of the account
+          example: ACTIVE
+          enum:
+            - ACTIVE
+            - CLOSED
+            - MATURED
+            - PREMATURELY_CLOSED
+        principalAmount:
+          type: number
+          description: Principal amount deposited
+          example: 100000
+        maturityAmount:
+          type: number
+          description: Expected maturity amount
+          example: 107500
+        effectiveDate:
+          type: string
+          description: Account effective date
+          format: date
+          example: '2025-01-15'
+        maturityDate:
+          type: string
+          description: Expected maturity date
+          format: date
+          example: '2026-01-15'
+        accountHolders:
+          type: array
+          description: List of account holders and their roles
+          items:
+            $ref: '#/components/schemas/AccountHolderView'
+      description: Fixed Deposit account details view
+    EarlyWithdrawlRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+    AddAccountHolderRequest:
+      required:
+        - customerId
+        - roleType
+      type: object
+      properties:
+        customerId:
+          type: string
+        roleType:
+          type: string
+          enum:
+            - OWNER
+            - CO_OWNER
+            - NOMINEE
+            - GUARDIAN
+        ownershipPercentage:
+          type: number
+    PrematureWithdrawalInquiryResponse:
+      type: object
+      properties:
+        accountNumber:
+          type: string
+        originalPrincipal:
+          type: number
+        interestAccruedToDate:
+          type: number
+        penaltyAmount:
+          type: number
+        finalPayoutAmount:
+          type: number
+        inquiryDate:
+          type: string
+          format: date
+    FDTransactionView:
+      type: object
+      properties:
+        transactionType:
+          type: string
+          enum:
+            - PRINCIPAL_DEPOSIT
+            - INTEREST_ACCRUAL
+            - INTEREST_PAYOUT
+            - INTEREST_CAPITALIZATION
+            - PREMATURE_WITHDRAWAL
+            - PENALTY_DEBIT
+            - MATURITY_PAYOUT
+            - RENEWAL_DEPOSIT
+        amount:
+          type: number
+        transactionDate:
+          type: string
+          format: date-time
+        description:
+          type: string
+        transactionReference:
+          type: string
+  securitySchemes:
+    Bearer Authentication:
+      type: http
+      description: JWT token obtained from the authentication service
+      scheme: bearer
+      bearerFormat: JWT

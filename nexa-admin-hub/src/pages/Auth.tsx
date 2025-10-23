@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import nexaLogo from "@/assets/nexa-logo.png";
-import { LogIn, UserPlus } from "lucide-react";
+import { LogIn, UserPlus, Loader2 } from "lucide-react";
+import { authAPI, tokenManager, startTokenRefresh } from "@/services/api";
 
 interface AuthProps {
   onLogin: (role: "admin" | "user") => void;
@@ -21,22 +22,59 @@ const Auth = ({ onLogin }: AuthProps) => {
     email: "",
     password: "",
     confirmPassword: "",
-    fullName: "",
+    firstName: "",
+    lastName: "",
+    phoneNumber: "",
+    dateOfBirth: "",
+    address: "",
+    city: "",
+    state: "",
+    country: "",
+    postalCode: "",
+    aadharNumber: "",
+    panNumber: "",
   });
+  const [isLoginLoading, setIsLoginLoading] = useState(false);
+  const [isSignupLoading, setIsSignupLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Mock authentication
-    // TODO: Replace with real API call to /api/auth/login from login.yaml
-    if (loginData.email && loginData.password) {
-      // Demo: admin@nexabank.com logs in as admin
-      const role = loginData.email === "admin@nexabank.com" ? "admin" : "user";
+    if (!loginData.email || !loginData.password) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all fields",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsLoginLoading(true);
+    
+    try {
+      // Call real login API
+      const response = await authAPI.login(loginData.email, loginData.password);
       
-      // Store auth token and userId (mock values for now)
-      // In production, these should come from the login API response
-      localStorage.setItem('authToken', 'mock-jwt-token-' + Date.now());
-      localStorage.setItem('userId', role === "admin" ? "admin-123" : "user-" + loginData.email.split('@')[0]);
+      // Store tokens
+      tokenManager.setTokens(response.token, response.refreshToken || response.token);
+      
+      // Decode token to get user info
+      const decodedToken = tokenManager.decodeToken(response.token);
+      
+      // Store user info
+      const userInfo = {
+        userId: response.userId || decodedToken?.userId,
+        email: response.email || decodedToken?.sub,
+        userType: response.userType || decodedToken?.userType,
+        roles: response.roles || decodedToken?.roles,
+      };
+      tokenManager.setUserInfo(userInfo);
+      
+      // Start auto token refresh
+      startTokenRefresh();
+      
+      // Determine role based on userType
+      const role = userInfo.userType === "ADMIN" ? "admin" : "user";
       
       toast({
         title: "Login Successful",
@@ -45,16 +83,19 @@ const Auth = ({ onLogin }: AuthProps) => {
       
       onLogin(role);
       navigate(role === "admin" ? "/admin" : "/dashboard");
-    } else {
+      
+    } catch (error: any) {
       toast({
         title: "Login Failed",
-        description: "Please fill in all fields",
+        description: error.message || "Invalid credentials. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsLoginLoading(false);
     }
   };
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (signupData.password !== signupData.confirmPassword) {
@@ -66,11 +107,56 @@ const Auth = ({ onLogin }: AuthProps) => {
       return;
     }
 
-    // TODO: Replace with real API call to /api/auth/register from login.yaml
-    if (signupData.email && signupData.password && signupData.fullName) {
-      // Store auth token and userId (mock values for now)
-      localStorage.setItem('authToken', 'mock-jwt-token-' + Date.now());
-      localStorage.setItem('userId', 'user-' + signupData.email.split('@')[0]);
+    // Validate required fields
+    if (!signupData.email || !signupData.password || !signupData.firstName || 
+        !signupData.lastName || !signupData.phoneNumber || !signupData.dateOfBirth) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsSignupLoading(true);
+    
+    try {
+      // Call real register API with all required fields
+      const response = await authAPI.register({
+        email: signupData.email,
+        password: signupData.password,
+        firstName: signupData.firstName,
+        lastName: signupData.lastName,
+        phoneNumber: signupData.phoneNumber,
+        dateOfBirth: signupData.dateOfBirth,
+        // Optional fields
+        ...(signupData.address && { address: signupData.address }),
+        ...(signupData.city && { city: signupData.city }),
+        ...(signupData.state && { state: signupData.state }),
+        ...(signupData.country && { country: signupData.country }),
+        ...(signupData.postalCode && { postalCode: signupData.postalCode }),
+        ...(signupData.aadharNumber && { aadharNumber: signupData.aadharNumber }),
+        ...(signupData.panNumber && { panNumber: signupData.panNumber }),
+        userType: "CUSTOMER"
+      });
+      
+      // Store tokens
+      tokenManager.setTokens(response.token, response.refreshToken || response.token);
+      
+      // Decode token to get user info
+      const decodedToken = tokenManager.decodeToken(response.token);
+      
+      // Store user info
+      const userInfo = {
+        userId: response.userId || decodedToken?.userId,
+        email: response.email || decodedToken?.sub,
+        userType: response.userType || decodedToken?.userType || "CUSTOMER",
+        roles: response.roles || decodedToken?.roles,
+      };
+      tokenManager.setUserInfo(userInfo);
+      
+      // Start auto token refresh
+      startTokenRefresh();
       
       toast({
         title: "Account Created",
@@ -79,12 +165,15 @@ const Auth = ({ onLogin }: AuthProps) => {
       
       onLogin("user");
       navigate("/dashboard");
-    } else {
+      
+    } catch (error: any) {
       toast({
-        title: "Signup Failed",
-        description: "Please fill in all fields",
+        title: "Registration Failed",
+        description: error.message || "Failed to create account. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsSignupLoading(false);
     }
   };
 
@@ -122,6 +211,7 @@ const Auth = ({ onLogin }: AuthProps) => {
                         setLoginData({ ...loginData, email: e.target.value })
                       }
                       required
+                      disabled={isLoginLoading}
                     />
                   </div>
                   <div className="space-y-2">
@@ -134,11 +224,16 @@ const Auth = ({ onLogin }: AuthProps) => {
                         setLoginData({ ...loginData, password: e.target.value })
                       }
                       required
+                      disabled={isLoginLoading}
                     />
                   </div>
-                  <Button type="submit" className="w-full gap-2" size="lg">
-                    <LogIn className="h-4 w-4" />
-                    Login
+                  <Button type="submit" className="w-full gap-2" size="lg" disabled={isLoginLoading}>
+                    {isLoginLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <LogIn className="h-4 w-4" />
+                    )}
+                    {isLoginLoading ? 'Logging in...' : 'Login'}
                   </Button>
                   <p className="text-xs text-center text-muted-foreground">
                     Demo: Use admin@nexabank.com for admin access
@@ -148,21 +243,38 @@ const Auth = ({ onLogin }: AuthProps) => {
 
               <TabsContent value="signup">
                 <form onSubmit={handleSignup} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-name">Full Name</Label>
-                    <Input
-                      id="signup-name"
-                      type="text"
-                      placeholder="John Doe"
-                      value={signupData.fullName}
-                      onChange={(e) =>
-                        setSignupData({ ...signupData, fullName: e.target.value })
-                      }
-                      required
-                    />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-firstname">First Name *</Label>
+                      <Input
+                        id="signup-firstname"
+                        type="text"
+                        placeholder="John"
+                        value={signupData.firstName}
+                        onChange={(e) =>
+                          setSignupData({ ...signupData, firstName: e.target.value })
+                        }
+                        required
+                        disabled={isSignupLoading}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-lastname">Last Name *</Label>
+                      <Input
+                        id="signup-lastname"
+                        type="text"
+                        placeholder="Doe"
+                        value={signupData.lastName}
+                        onChange={(e) =>
+                          setSignupData({ ...signupData, lastName: e.target.value })
+                        }
+                        required
+                        disabled={isSignupLoading}
+                      />
+                    </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signup-email">Email</Label>
+                    <Label htmlFor="signup-email">Email *</Label>
                     <Input
                       id="signup-email"
                       type="email"
@@ -172,22 +284,158 @@ const Auth = ({ onLogin }: AuthProps) => {
                         setSignupData({ ...signupData, email: e.target.value })
                       }
                       required
+                      disabled={isSignupLoading}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signup-password">Password</Label>
+                    <Label htmlFor="signup-phone">Phone Number *</Label>
+                    <Input
+                      id="signup-phone"
+                      type="tel"
+                      placeholder="9876543210"
+                      pattern="^[6-9]\d{9}$"
+                      title="Enter a valid 10-digit Indian mobile number"
+                      value={signupData.phoneNumber}
+                      onChange={(e) =>
+                        setSignupData({ ...signupData, phoneNumber: e.target.value })
+                      }
+                      required
+                      disabled={isSignupLoading}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-dob">Date of Birth *</Label>
+                    <Input
+                      id="signup-dob"
+                      type="date"
+                      value={signupData.dateOfBirth}
+                      onChange={(e) =>
+                        setSignupData({ ...signupData, dateOfBirth: e.target.value })
+                      }
+                      required
+                      disabled={isSignupLoading}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-address">Address</Label>
+                    <Input
+                      id="signup-address"
+                      type="text"
+                      placeholder="123 Main Street"
+                      value={signupData.address}
+                      onChange={(e) =>
+                        setSignupData({ ...signupData, address: e.target.value })
+                      }
+                      disabled={isSignupLoading}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-city">City</Label>
+                      <Input
+                        id="signup-city"
+                        type="text"
+                        placeholder="Mumbai"
+                        value={signupData.city}
+                        onChange={(e) =>
+                          setSignupData({ ...signupData, city: e.target.value })
+                        }
+                        disabled={isSignupLoading}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-state">State</Label>
+                      <Input
+                        id="signup-state"
+                        type="text"
+                        placeholder="Maharashtra"
+                        value={signupData.state}
+                        onChange={(e) =>
+                          setSignupData({ ...signupData, state: e.target.value })
+                        }
+                        disabled={isSignupLoading}
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-country">Country</Label>
+                      <Input
+                        id="signup-country"
+                        type="text"
+                        placeholder="India"
+                        value={signupData.country}
+                        onChange={(e) =>
+                          setSignupData({ ...signupData, country: e.target.value })
+                        }
+                        disabled={isSignupLoading}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-postal">Postal Code</Label>
+                      <Input
+                        id="signup-postal"
+                        type="text"
+                        placeholder="400001"
+                        pattern="^[1-9]\d{5}$"
+                        title="Enter a valid 6-digit Indian postal code"
+                        value={signupData.postalCode}
+                        onChange={(e) =>
+                          setSignupData({ ...signupData, postalCode: e.target.value })
+                        }
+                        disabled={isSignupLoading}
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-aadhar">Aadhar Number</Label>
+                      <Input
+                        id="signup-aadhar"
+                        type="text"
+                        placeholder="234567890123"
+                        pattern="^[2-9]\d{11}$"
+                        title="Enter a valid 12-digit Aadhar number"
+                        value={signupData.aadharNumber}
+                        onChange={(e) =>
+                          setSignupData({ ...signupData, aadharNumber: e.target.value })
+                        }
+                        disabled={isSignupLoading}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-pan">PAN Number</Label>
+                      <Input
+                        id="signup-pan"
+                        type="text"
+                        placeholder="ABCDE1234F"
+                        pattern="^[A-Z]{5}[0-9]{4}[A-Z]{1}$"
+                        title="Enter a valid PAN number (e.g., ABCDE1234F)"
+                        value={signupData.panNumber}
+                        onChange={(e) =>
+                          setSignupData({ ...signupData, panNumber: e.target.value.toUpperCase() })
+                        }
+                        disabled={isSignupLoading}
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-password">Password *</Label>
                     <Input
                       id="signup-password"
                       type="password"
+                      minLength={8}
+                      title="Password must be at least 8 characters with uppercase, lowercase, number, and special character"
                       value={signupData.password}
                       onChange={(e) =>
                         setSignupData({ ...signupData, password: e.target.value })
                       }
                       required
+                      disabled={isSignupLoading}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signup-confirm">Confirm Password</Label>
+                    <Label htmlFor="signup-confirm">Confirm Password *</Label>
                     <Input
                       id="signup-confirm"
                       type="password"
@@ -199,12 +447,20 @@ const Auth = ({ onLogin }: AuthProps) => {
                         })
                       }
                       required
+                      disabled={isSignupLoading}
                     />
                   </div>
-                  <Button type="submit" className="w-full gap-2" size="lg">
-                    <UserPlus className="h-4 w-4" />
-                    Create Account
+                  <Button type="submit" className="w-full gap-2" size="lg" disabled={isSignupLoading}>
+                    {isSignupLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <UserPlus className="h-4 w-4" />
+                    )}
+                    {isSignupLoading ? 'Creating Account...' : 'Create Account'}
                   </Button>
+                  <p className="text-xs text-center text-muted-foreground">
+                    * Required fields
+                  </p>
                 </form>
               </TabsContent>
             </Tabs>

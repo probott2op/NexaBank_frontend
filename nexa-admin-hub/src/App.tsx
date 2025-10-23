@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,6 +10,7 @@ import Auth from "./pages/Auth";
 import AdminDashboard from "./pages/AdminDashboard";
 import UserDashboard from "./pages/UserDashboard";
 import NotFound from "./pages/NotFound";
+import { tokenManager, startTokenRefresh, stopTokenRefresh } from "./services/api";
 
 const queryClient = new QueryClient();
 
@@ -17,12 +18,32 @@ const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState<"admin" | "user">("user");
 
+  // Check authentication status on mount
+  useEffect(() => {
+    const token = tokenManager.getAccessToken();
+    const userInfo = tokenManager.getUserInfo();
+    
+    if (token && userInfo) {
+      setIsAuthenticated(true);
+      setUserRole(userInfo.userType === "ADMIN" ? "admin" : "user");
+      // Start token refresh if user is authenticated
+      startTokenRefresh();
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      stopTokenRefresh();
+    };
+  }, []);
+
   const handleLogin = (role: "admin" | "user") => {
     setIsAuthenticated(true);
     setUserRole(role);
   };
 
   const handleLogout = () => {
+    tokenManager.clearTokens();
+    stopTokenRefresh();
     setIsAuthenticated(false);
     setUserRole("user");
   };

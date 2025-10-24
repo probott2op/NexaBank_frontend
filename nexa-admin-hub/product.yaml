@@ -40,7 +40,23 @@ info:
     4. Check example requests and responses for each operation
 
     ## Authentication
-    This API requires authentication. Contact your system administrator for access credentials.
+    This API uses JWT Bearer token authentication from NEXA Bank Auth Service.
+
+    **How to authenticate:**
+    1. Click the **Authorize** button (ðŸ”“) at the top of this page
+    2. Enter your JWT token in the format: `Bearer <your_token>`
+    3. Click **Authorize** to apply the token to all requests
+
+    **To get a JWT token:**
+    ```bash
+    curl -X POST http://localhost:3020/api/auth/login \
+      -H "Content-Type: application/json" \
+      -d '{"email": "admin@nexabank.com", "password": "YourPassword"}'
+    ```
+
+    **Access Rules:**
+    - **GET requests**: Public (no authentication required)
+    - **POST/PUT/DELETE requests**: Require ADMIN role in JWT token
 
     ## Support
     For technical support, documentation, or API access requests, contact the Banking Labs support team.
@@ -64,6 +80,8 @@ servers:
     description: User Acceptance Testing Environment
   - url: https://api.bankinglabs.com
     description: Production Environment
+security:
+  - bearerAuth: []
 tags:
   - name: Product Interest Rates
     description: This API provides a structured rate card for financial products like fixed deposits. It allows for the retrieval of precise interest rates based on the product's term length. For each term, the API returns a set of rates corresponding to various payout schedules, including cumulative and non-cumulative (monthly, quarterly, yearly) options.
@@ -2123,14 +2141,14 @@ paths:
           required: true
           schema:
             type: string
-          example: SAV-HIGH-YIELD-2025
+          example: FD001
         - name: commId
           in: path
           description: Communication template ID (UUID) to update
           required: true
           schema:
             type: string
-          example: comm-991e8400-e29b-41d4-a716-446655440001
+          example: COMM_OPENING
       requestBody:
         description: |
           Updated communication template configuration.
@@ -6225,12 +6243,12 @@ components:
     Page:
       type: object
       properties:
-        totalPages:
-          type: integer
-          format: int32
         totalElements:
           type: integer
           format: int64
+        totalPages:
+          type: integer
+          format: int32
         first:
           type: boolean
         last:
@@ -6246,11 +6264,11 @@ components:
           format: int32
         sort:
           $ref: '#/components/schemas/SortObject'
-        pageable:
-          $ref: '#/components/schemas/PageableObject'
         numberOfElements:
           type: integer
           format: int32
+        pageable:
+          $ref: '#/components/schemas/PageableObject'
         empty:
           type: boolean
     PageableObject:
@@ -6276,19 +6294,19 @@ components:
       properties:
         empty:
           type: boolean
-        unsorted:
-          type: boolean
         sorted:
+          type: boolean
+        unsorted:
           type: boolean
     PageProductChargeDTO:
       type: object
       properties:
-        totalPages:
-          type: integer
-          format: int32
         totalElements:
           type: integer
           format: int64
+        totalPages:
+          type: integer
+          format: int32
         first:
           type: boolean
         last:
@@ -6305,10 +6323,16 @@ components:
           format: int32
         sort:
           $ref: '#/components/schemas/SortObject'
-        pageable:
-          $ref: '#/components/schemas/PageableObject'
         numberOfElements:
           type: integer
           format: int32
+        pageable:
+          $ref: '#/components/schemas/PageableObject'
         empty:
           type: boolean
+  securitySchemes:
+    bearerAuth:
+      type: http
+      description: 'JWT token from NEXA Bank Auth Service. Format: `Bearer <your_jwt_token>`. Get token from: http://localhost:3020/api/auth/login'
+      scheme: bearer
+      bearerFormat: JWT

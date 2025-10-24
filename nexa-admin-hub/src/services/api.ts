@@ -4,6 +4,7 @@ const API_URLS = {
   FD_CALC: 'http://localhost:8081', // FD Calculator Service  
   FD_ACCOUNT: 'http://localhost:9090', // FD Account Management Service
   PRODUCT: 'http://localhost:8080', // Product & Pricing Service
+  CUSTOMER: 'http://localhost:1005', // Customer Profile Service
 };
 
 // Token Management
@@ -18,6 +19,7 @@ export const tokenManager = {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('userInfo');
+    localStorage.removeItem('customerNumber');
   },
   getUserInfo: () => {
     const userInfo = localStorage.getItem('userInfo');
@@ -25,6 +27,10 @@ export const tokenManager = {
   },
   setUserInfo: (userInfo: any) => {
     localStorage.setItem('userInfo', JSON.stringify(userInfo));
+  },
+  getCustomerNumber: () => localStorage.getItem('customerNumber'),
+  setCustomerNumber: (customerNumber: string) => {
+    localStorage.setItem('customerNumber', customerNumber);
   },
   // Decode JWT to get user info
   decodeToken: (token: string) => {
@@ -63,8 +69,10 @@ export const startTokenRefresh = () => {
         });
         
         if (response.ok) {
-          const data = await response.json();
-          tokenManager.setTokens(data.token, data.refreshToken);
+          const result = await response.json();
+          // Handle response with data wrapper
+          const { accessToken, refreshToken: newRefreshToken } = result.data || result;
+          tokenManager.setTokens(accessToken, newRefreshToken);
           console.log('Token refreshed successfully');
         } else {
           console.error('Token refresh failed, logging out');
@@ -154,7 +162,11 @@ export const authAPI = {
     
     if (!response.ok) {
       const error = await response.json().catch(() => ({ message: 'Login failed' }));
-      throw new Error(error.message || 'Login failed');
+      // Create a custom error with status code for better handling
+      const customError: any = new Error(error.message || error.error || 'Login failed');
+      customError.status = response.status;
+      customError.details = error;
+      throw customError;
     }
     
     return response.json();
@@ -312,4 +324,59 @@ export const fdAccountAPI = {
   // Get current user info
   getCurrentUser: () => 
     apiFetch(`${API_URLS.FD_ACCOUNT}/api/v1/auth/me`),
+};
+
+// Customer Profile APIs
+export const customerAPI = {
+  // Get profile by email
+  getProfileByEmail: (email: string) => 
+    apiFetch(`${API_URLS.CUSTOMER}/api/profiles/email/${encodeURIComponent(email)}`),
+  
+  // Get profile by customer number
+  getProfileByCustomerNumber: (customerNumber: string) => 
+    apiFetch(`${API_URLS.CUSTOMER}/api/profiles/customer/${customerNumber}`),
+  
+  // Get profile by user ID
+  getProfileByUserId: (userId: string) => 
+    apiFetch(`${API_URLS.CUSTOMER}/api/profiles/user/${userId}`),
+  
+  // Update profile by customer number
+  updateProfile: (customerNumber: string, data: any) => 
+    apiFetch(`${API_URLS.CUSTOMER}/api/profiles/customer/${customerNumber}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  
+  // Update address
+  updateAddress: (customerNumber: string, data: any) => 
+    apiFetch(`${API_URLS.CUSTOMER}/api/profiles/customer/${customerNumber}/address`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  
+  // Update name
+  updateName: (customerNumber: string, data: any) => 
+    apiFetch(`${API_URLS.CUSTOMER}/api/profiles/customer/${customerNumber}/name`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  
+  // Update identification
+  updateIdentification: (customerNumber: string, data: any) => 
+    apiFetch(`${API_URLS.CUSTOMER}/api/profiles/customer/${customerNumber}/identification`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  
+  // Get audit trail
+  getAuditTrail: (userId: string) => 
+    apiFetch(`${API_URLS.CUSTOMER}/api/profiles/user/${userId}/audit-trail`),
+  
+  // Search profiles
+  searchProfiles: (name: string) => 
+    apiFetch(`${API_URLS.CUSTOMER}/api/profiles/search?name=${encodeURIComponent(name)}`),
+  
+  // Get all profiles (admin only)
+  getAllProfiles: () => 
+    apiFetch(`${API_URLS.CUSTOMER}/api/profiles`),
 };

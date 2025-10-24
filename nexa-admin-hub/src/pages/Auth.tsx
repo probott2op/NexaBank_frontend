@@ -37,6 +37,17 @@ const Auth = ({ onLogin }: AuthProps) => {
   const [isLoginLoading, setIsLoginLoading] = useState(false);
   const [isSignupLoading, setIsSignupLoading] = useState(false);
 
+  // Helper function to format lockout time
+  const formatLockoutTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    
+    if (minutes > 0) {
+      return `${minutes} minute${minutes > 1 ? 's' : ''} ${remainingSeconds > 0 ? `and ${remainingSeconds} second${remainingSeconds > 1 ? 's' : ''}` : ''}`;
+    }
+    return `${remainingSeconds} second${remainingSeconds > 1 ? 's' : ''}`;
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -55,18 +66,21 @@ const Auth = ({ onLogin }: AuthProps) => {
       // Call real login API
       const response = await authAPI.login(loginData.email, loginData.password);
       
+      // Extract data from response (response has a 'data' wrapper)
+      const { accessToken, refreshToken, user } = response.data || response;
+      
       // Store tokens
-      tokenManager.setTokens(response.token, response.refreshToken || response.token);
+      tokenManager.setTokens(accessToken, refreshToken || accessToken);
       
       // Decode token to get user info
-      const decodedToken = tokenManager.decodeToken(response.token);
+      const decodedToken = tokenManager.decodeToken(accessToken);
       
-      // Store user info
+      // Store user info (use user object from response if available)
       const userInfo = {
-        userId: response.userId || decodedToken?.userId,
-        email: response.email || decodedToken?.sub,
-        userType: response.userType || decodedToken?.userType,
-        roles: response.roles || decodedToken?.roles,
+        userId: user?.userId || decodedToken?.userId,
+        email: user?.email || decodedToken?.sub,
+        userType: user?.userType || decodedToken?.userType,
+        roles: user?.roles || decodedToken?.roles,
       };
       tokenManager.setUserInfo(userInfo);
       
@@ -85,11 +99,32 @@ const Auth = ({ onLogin }: AuthProps) => {
       navigate(role === "admin" ? "/admin" : "/dashboard");
       
     } catch (error: any) {
-      toast({
-        title: "Login Failed",
-        description: error.message || "Invalid credentials. Please try again.",
-        variant: "destructive",
-      });
+      // Handle account lockout (423 status)
+      if (error.status === 423) {
+        // Extract seconds from error message if available
+        const message = error.message || "";
+        const secondsMatch = message.match(/(\d+)\s+seconds?/);
+        
+        let description = message;
+        if (secondsMatch) {
+          const seconds = parseInt(secondsMatch[1]);
+          const formattedTime = formatLockoutTime(seconds);
+          description = `Your account is temporarily locked. Please try again in ${formattedTime}.`;
+        }
+        
+        toast({
+          title: "Account Locked",
+          description,
+          variant: "destructive",
+          duration: 10000, // Show for 10 seconds
+        });
+      } else {
+        toast({
+          title: "Login Failed",
+          description: error.message || "Invalid credentials. Please try again.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsLoginLoading(false);
     }
@@ -140,18 +175,21 @@ const Auth = ({ onLogin }: AuthProps) => {
         userType: "CUSTOMER"
       });
       
+      // Extract data from response (response has a 'data' wrapper)
+      const { accessToken, refreshToken, user } = response.data || response;
+      
       // Store tokens
-      tokenManager.setTokens(response.token, response.refreshToken || response.token);
+      tokenManager.setTokens(accessToken, refreshToken || accessToken);
       
       // Decode token to get user info
-      const decodedToken = tokenManager.decodeToken(response.token);
+      const decodedToken = tokenManager.decodeToken(accessToken);
       
-      // Store user info
+      // Store user info (use user object from response if available)
       const userInfo = {
-        userId: response.userId || decodedToken?.userId,
-        email: response.email || decodedToken?.sub,
-        userType: response.userType || decodedToken?.userType || "CUSTOMER",
-        roles: response.roles || decodedToken?.roles,
+        userId: user?.userId || decodedToken?.userId,
+        email: user?.email || decodedToken?.sub,
+        userType: user?.userType || decodedToken?.userType || "CUSTOMER",
+        roles: user?.roles || decodedToken?.roles,
       };
       tokenManager.setUserInfo(userInfo);
       

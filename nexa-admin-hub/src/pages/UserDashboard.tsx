@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, Wallet, Clock, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { fdAccountAPI, tokenManager } from "@/services/api";
+import { fdAccountAPI, tokenManager, customerAPI } from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
 
 const UserDashboard = () => {
+  const navigate = useNavigate();
   const [profile, setProfile] = useState<any>(null);
   const [fdAccounts, setFdAccounts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,19 +31,31 @@ const UserDashboard = () => {
           return;
         }
 
-        // Try to get current user info from FD Account API
-        try {
-          const userData = await fdAccountAPI.getCurrentUser();
-          setProfile(userData);
-        } catch (error) {
-          console.log('Using user info from token');
-          // Use token info as fallback
-          setProfile({
-            userId: userInfo.userId,
-            email: userInfo.email,
-            firstName: userInfo.email.split('@')[0],
-            lastName: '',
-          });
+        // Get email from token to fetch customer profile
+        const token = tokenManager.getAccessToken();
+        const decodedToken = token ? tokenManager.decodeToken(token) : null;
+        const email = decodedToken?.sub || userInfo.email;
+
+        // Fetch customer profile by email
+        if (email) {
+          try {
+            const customerProfile = await customerAPI.getProfileByEmail(email);
+            setProfile(customerProfile);
+            
+            // Store customer number for future use
+            if (customerProfile.customerNumber) {
+              tokenManager.setCustomerNumber(customerProfile.customerNumber);
+            }
+          } catch (error) {
+            console.error('Failed to fetch customer profile:', error);
+            // Fallback to token info
+            setProfile({
+              userId: userInfo.userId,
+              email: userInfo.email,
+              firstName: userInfo.email.split('@')[0],
+              lastName: '',
+            });
+          }
         }
 
         // Fetch FD accounts using customerId
@@ -167,8 +181,8 @@ const UserDashboard = () => {
                         <p className="text-lg font-semibold mt-1">{profile.phoneNumber || '-'}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground">Customer ID</label>
-                        <p className="text-lg font-semibold mt-1">{profile.userId}</p>
+                        <label className="text-sm font-medium text-muted-foreground">Customer Number</label>
+                        <p className="text-lg font-semibold mt-1">{profile.customerNumber || '-'}</p>
                       </div>
                       <div>
                         <label className="text-sm font-medium text-muted-foreground">City</label>

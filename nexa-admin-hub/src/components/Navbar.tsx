@@ -4,14 +4,24 @@ import { LogOut, User } from "lucide-react";
 import nexaLogo from "@/assets/nexa-logo.png";
 import { authAPI } from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 interface NavbarProps {
   isAuthenticated: boolean;
   userRole?: "admin" | "user";
+  userName?: string;
   onLogout: () => void;
 }
 
-export const Navbar = ({ isAuthenticated, userRole, onLogout }: NavbarProps) => {
+export const Navbar = ({ isAuthenticated, userRole, userName, onLogout }: NavbarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -33,6 +43,12 @@ export const Navbar = ({ isAuthenticated, userRole, onLogout }: NavbarProps) => 
       onLogout();
       navigate('/');
     }
+  };
+
+  // Get first letter of user's name for avatar
+  const getUserInitial = () => {
+    if (!userName) return 'U';
+    return userName.charAt(0).toUpperCase();
   };
   
   return (
@@ -60,10 +76,39 @@ export const Navbar = ({ isAuthenticated, userRole, onLogout }: NavbarProps) => 
                   {userRole === "admin" ? "Admin Panel" : "Dashboard"}
                 </Button>
               </Link>
-              <Button variant="ghost" onClick={handleLogout} className="gap-2">
-                <LogOut className="h-4 w-4" />
-                Logout
-              </Button>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                    <Avatar className="h-10 w-10">
+                      <AvatarFallback className="bg-primary text-primary-foreground">
+                        {getUserInitial()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">{userName || 'User'}</p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {userRole === "admin" ? "Administrator" : "Customer"}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {userRole !== "admin" && (
+                    <DropdownMenuItem onClick={() => navigate('/profile')}>
+                      <User className="mr-2 h-4 w-4" />
+                      <span>My Profile</span>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Logout</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </>
           )}
         </div>

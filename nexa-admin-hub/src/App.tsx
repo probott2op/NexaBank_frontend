@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import AdminDashboard from "./pages/AdminDashboard";
 import UserDashboard from "./pages/UserDashboard";
+import CustomerProfile from "./pages/CustomerProfile";
 import NotFound from "./pages/NotFound";
 import { tokenManager, startTokenRefresh, stopTokenRefresh } from "./services/api";
 
@@ -17,6 +18,7 @@ const queryClient = new QueryClient();
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState<"admin" | "user">("user");
+  const [userName, setUserName] = useState<string>("");
 
   // Check authentication status on mount
   useEffect(() => {
@@ -26,6 +28,7 @@ const App = () => {
     if (token && userInfo) {
       setIsAuthenticated(true);
       setUserRole(userInfo.userType === "ADMIN" ? "admin" : "user");
+      setUserName(userInfo.firstName || userInfo.email?.split('@')[0] || "User");
       // Start token refresh if user is authenticated
       startTokenRefresh();
     }
@@ -39,6 +42,8 @@ const App = () => {
   const handleLogin = (role: "admin" | "user") => {
     setIsAuthenticated(true);
     setUserRole(role);
+    const userInfo = tokenManager.getUserInfo();
+    setUserName(userInfo?.firstName || userInfo?.email?.split('@')[0] || "User");
   };
 
   const handleLogout = () => {
@@ -46,6 +51,7 @@ const App = () => {
     stopTokenRefresh();
     setIsAuthenticated(false);
     setUserRole("user");
+    setUserName("");
   };
 
   return (
@@ -58,6 +64,7 @@ const App = () => {
             <Navbar 
               isAuthenticated={isAuthenticated} 
               userRole={userRole}
+              userName={userName}
               onLogout={handleLogout}
             />
             <main className="flex-1">
@@ -88,6 +95,16 @@ const App = () => {
                   element={
                     isAuthenticated && userRole === "user" ? (
                       <UserDashboard />
+                    ) : (
+                      <Navigate to="/auth" replace />
+                    )
+                  } 
+                />
+                <Route 
+                  path="/profile" 
+                  element={
+                    isAuthenticated && userRole === "user" ? (
+                      <CustomerProfile />
                     ) : (
                       <Navigate to="/auth" replace />
                     )

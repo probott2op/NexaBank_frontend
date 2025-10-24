@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Table,
   TableBody,
@@ -25,6 +26,7 @@ import {
 } from "@/components/ui/select";
 
 export const ProductManagementTable = () => {
+  const navigate = useNavigate();
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -64,6 +66,10 @@ export const ProductManagementTable = () => {
   const handleCreateProduct = () => {
     setSelectedProduct(null);
     setIsDialogOpen(true);
+  };
+
+  const handleViewProduct = (product: any) => {
+    navigate(`/admin/products/${product.productCode}`);
   };
 
   const handleEditProduct = (product: any) => {
@@ -283,7 +289,8 @@ export const ProductManagementTable = () => {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleEditProduct(product)}
+                            onClick={() => handleViewProduct(product)}
+                            title="View product details"
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
@@ -291,6 +298,7 @@ export const ProductManagementTable = () => {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleEditProduct(product)}
+                            title="Edit product"
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -298,6 +306,7 @@ export const ProductManagementTable = () => {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleDeleteProduct(product)}
+                            title="Delete product"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>

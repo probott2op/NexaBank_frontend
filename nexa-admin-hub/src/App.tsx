@@ -10,6 +10,7 @@ import Auth from "./pages/Auth";
 import AdminDashboard from "./pages/AdminDashboard";
 import UserDashboard from "./pages/UserDashboard";
 import CustomerProfile from "./pages/CustomerProfile";
+import ProductDetails from "./pages/ProductDetails";
 import NotFound from "./pages/NotFound";
 import { tokenManager, startTokenRefresh, stopTokenRefresh } from "./services/api";
 
@@ -85,6 +86,16 @@ const App = () => {
                   element={
                     isAuthenticated && userRole === "admin" ? (
                       <AdminDashboard />
+                    ) : (
+                      <Navigate to="/auth" replace />
+                    )
+                  } 
+                />
+                <Route 
+                  path="/admin/products/:productCode" 
+                  element={
+                    isAuthenticated && userRole === "admin" ? (
+                      <ProductDetails />
                     ) : (
                       <Navigate to="/auth" replace />
                     )

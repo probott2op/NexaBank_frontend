@@ -1,0 +1,640 @@
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { productAPI } from "@/services/api";
+import { useToast } from "@/hooks/use-toast";
+import { 
+  ArrowLeft, 
+  DollarSign, 
+  Receipt, 
+  BarChart3, 
+  Shield, 
+  ArrowLeftRight, 
+  Mail, 
+  Users,
+  Plus
+} from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
+const ProductDetails = () => {
+  const { productCode } = useParams<{ productCode: string }>();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  
+  const [product, setProduct] = useState<any>(null);
+  const [interestRates, setInterestRates] = useState<any[]>([]);
+  const [charges, setCharges] = useState<any[]>([]);
+  const [balances, setBalances] = useState<any[]>([]);
+  const [rules, setRules] = useState<any[]>([]);
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [communications, setCommunications] = useState<any[]>([]);
+  const [roles, setRoles] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (productCode) {
+      fetchAllData();
+    }
+  }, [productCode]);
+
+  const fetchAllData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch product details
+      const productData = await productAPI.getProductByCode(productCode!);
+      setProduct(productData);
+
+      // Fetch all related entities in parallel
+      const [
+        interestData,
+        chargesData,
+        balancesData,
+        rulesData,
+        transactionsData,
+        communicationsData,
+        rolesData
+      ] = await Promise.all([
+        productAPI.getInterestRates(productCode!).catch(() => ({ content: [] })),
+        productAPI.getCharges(productCode!).catch(() => ({ content: [] })),
+        productAPI.getBalances(productCode!).catch(() => ({ content: [] })),
+        productAPI.getRules(productCode!).catch(() => ({ content: [] })),
+        productAPI.getTransactions(productCode!).catch(() => ({ content: [] })),
+        productAPI.getCommunications(productCode!).catch(() => ({ content: [] })),
+        productAPI.getRoles(productCode!).catch(() => ({ content: [] })),
+      ]);
+
+      setInterestRates(interestData.content || interestData || []);
+      setCharges(chargesData.content || chargesData || []);
+      setBalances(balancesData.content || balancesData || []);
+      setRules(rulesData.content || rulesData || []);
+      setTransactions(transactionsData.content || transactionsData || []);
+      setCommunications(communicationsData.content || communicationsData || []);
+      setRoles(rolesData.content || rolesData || []);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to fetch product details",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddInterestRate = () => {
+    // TODO: Open dialog to add interest rate
+    toast({ title: "Coming Soon", description: "Interest rate configuration dialog" });
+  };
+
+  const handleAddCharge = () => {
+    // TODO: Open dialog to add charge
+    toast({ title: "Coming Soon", description: "Charge configuration dialog" });
+  };
+
+  const handleAddRule = () => {
+    // TODO: Open dialog to add rule
+    toast({ title: "Coming Soon", description: "Business rule configuration dialog" });
+  };
+
+  const handleAddTransaction = () => {
+    // TODO: Open dialog to add transaction type
+    toast({ title: "Coming Soon", description: "Transaction type configuration dialog" });
+  };
+
+  const handleAddCommunication = () => {
+    // TODO: Open dialog to add communication template
+    toast({ title: "Coming Soon", description: "Communication template configuration dialog" });
+  };
+
+  const handleAddRole = () => {
+    // TODO: Open dialog to add role
+    toast({ title: "Coming Soon", description: "Role configuration dialog" });
+  };
+
+  const handleAddBalance = () => {
+    // TODO: Open dialog to add balance type
+    toast({ title: "Coming Soon", description: "Balance type configuration dialog" });
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-muted/30 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-lg">Loading product details...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="min-h-screen bg-muted/30 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-lg mb-4">Product not found</div>
+          <Button onClick={() => navigate('/admin')}>Back to Admin Dashboard</Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-muted/30">
+      <div className="container py-8 px-4">
+        {/* Header */}
+        <div className="mb-6">
+          <Button variant="ghost" onClick={() => navigate('/admin')} className="mb-4">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Admin Dashboard
+          </Button>
+          
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-4xl font-bold mb-2">{product.productName}</h1>
+              <div className="flex items-center gap-3 mb-3">
+                <Badge variant={product.status === 'ACTIVE' ? 'default' : 'secondary'}>
+                  {product.status}
+                </Badge>
+                <span className="text-muted-foreground">Code: {product.productCode}</span>
+                <span className="text-muted-foreground">Type: {product.productType}</span>
+              </div>
+              {product.description && (
+                <p className="text-muted-foreground max-w-2xl">{product.description}</p>
+              )}
+            </div>
+            <div className="text-right">
+              <div className="text-sm text-muted-foreground mb-1">Currency</div>
+              <div className="text-2xl font-bold">{product.currency}</div>
+              <div className="text-sm text-muted-foreground mt-2">
+                {product.interestType} Interest
+                {product.compoundingFrequency && ` (${product.compoundingFrequency})`}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Tabs for different configurations */}
+        <Tabs defaultValue="interest" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-7">
+            <TabsTrigger value="interest" className="gap-2">
+              <DollarSign className="h-4 w-4" />
+              Interest Rates
+            </TabsTrigger>
+            <TabsTrigger value="charges" className="gap-2">
+              <Receipt className="h-4 w-4" />
+              Charges
+            </TabsTrigger>
+            <TabsTrigger value="rules" className="gap-2">
+              <Shield className="h-4 w-4" />
+              Rules
+            </TabsTrigger>
+            <TabsTrigger value="transactions" className="gap-2">
+              <ArrowLeftRight className="h-4 w-4" />
+              Transactions
+            </TabsTrigger>
+            <TabsTrigger value="communications" className="gap-2">
+              <Mail className="h-4 w-4" />
+              Communications
+            </TabsTrigger>
+            <TabsTrigger value="roles" className="gap-2">
+              <Users className="h-4 w-4" />
+              Roles
+            </TabsTrigger>
+            <TabsTrigger value="balances" className="gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Balances
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Interest Rates Tab */}
+          <TabsContent value="interest">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Interest Rate Configuration</CardTitle>
+                    <CardDescription>
+                      Manage tiered interest rates and balance ranges
+                    </CardDescription>
+                  </div>
+                  <Button onClick={handleAddInterestRate}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Rate Tier
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {interestRates.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No interest rates configured. Add your first rate tier to get started.
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Rate Code</TableHead>
+                        <TableHead>Term (Months)</TableHead>
+                        <TableHead>Rate (%)</TableHead>
+                        <TableHead>Min Balance</TableHead>
+                        <TableHead>Max Balance</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {interestRates.map((rate) => (
+                        <TableRow key={rate.rateId}>
+                          <TableCell className="font-medium">{rate.rateCode}</TableCell>
+                          <TableCell>{rate.termInMonths}</TableCell>
+                          <TableCell>{rate.interestRate}%</TableCell>
+                          <TableCell>{rate.minBalance?.toLocaleString() || '-'}</TableCell>
+                          <TableCell>{rate.maxBalance?.toLocaleString() || '-'}</TableCell>
+                          <TableCell>
+                            <Badge variant={rate.isActive ? 'default' : 'secondary'}>
+                              {rate.isActive ? 'Active' : 'Inactive'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Button variant="ghost" size="sm">Edit</Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Charges Tab */}
+          <TabsContent value="charges">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Charges & Fees</CardTitle>
+                    <CardDescription>
+                      Manage account maintenance fees, transaction charges, and penalties
+                    </CardDescription>
+                  </div>
+                  <Button onClick={handleAddCharge}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Charge
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {charges.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No charges configured. Add charges and fees for this product.
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Charge Code</TableHead>
+                        <TableHead>Charge Name</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Amount</TableHead>
+                        <TableHead>Frequency</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {charges.map((charge) => (
+                        <TableRow key={charge.chargeId}>
+                          <TableCell className="font-medium">{charge.chargeCode}</TableCell>
+                          <TableCell>{charge.chargeName}</TableCell>
+                          <TableCell>{charge.calculationType}</TableCell>
+                          <TableCell>
+                            {charge.calculationType === 'PERCENTAGE' 
+                              ? `${charge.chargeAmount}%` 
+                              : `₹${charge.chargeAmount}`}
+                          </TableCell>
+                          <TableCell>{charge.frequency}</TableCell>
+                          <TableCell>
+                            <Badge variant={charge.isActive ? 'default' : 'secondary'}>
+                              {charge.isActive ? 'Active' : 'Inactive'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Button variant="ghost" size="sm">Edit</Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Business Rules Tab */}
+          <TabsContent value="rules">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Business Rules</CardTitle>
+                    <CardDescription>
+                      Configure validation rules, eligibility criteria, and constraints
+                    </CardDescription>
+                  </div>
+                  <Button onClick={handleAddRule}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Rule
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {rules.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No business rules configured. Add rules to govern product behavior.
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Rule Code</TableHead>
+                        <TableHead>Rule Name</TableHead>
+                        <TableHead>Validation Type</TableHead>
+                        <TableHead>Rule Value</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {rules.map((rule) => (
+                        <TableRow key={rule.ruleId}>
+                          <TableCell className="font-medium">{rule.ruleCode}</TableCell>
+                          <TableCell>{rule.ruleName}</TableCell>
+                          <TableCell>{rule.validationType}</TableCell>
+                          <TableCell className="max-w-xs truncate">{rule.ruleValue}</TableCell>
+                          <TableCell>
+                            <Badge variant={rule.isActive ? 'default' : 'secondary'}>
+                              {rule.isActive ? 'Active' : 'Inactive'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Button variant="ghost" size="sm">Edit</Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Transaction Types Tab */}
+          <TabsContent value="transactions">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Transaction Types</CardTitle>
+                    <CardDescription>
+                      Configure allowed transaction types, limits, and channel availability
+                    </CardDescription>
+                  </div>
+                  <Button onClick={handleAddTransaction}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Transaction Type
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {transactions.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No transaction types configured. Add transaction configurations.
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Transaction Code</TableHead>
+                        <TableHead>Transaction Type</TableHead>
+                        <TableHead>Min Amount</TableHead>
+                        <TableHead>Max Amount</TableHead>
+                        <TableHead>Daily Limit</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {transactions.map((txn) => (
+                        <TableRow key={txn.transactionId}>
+                          <TableCell className="font-medium">{txn.transactionCode}</TableCell>
+                          <TableCell>{txn.transactionType}</TableCell>
+                          <TableCell>₹{txn.minAmount?.toLocaleString() || '-'}</TableCell>
+                          <TableCell>₹{txn.maxAmount?.toLocaleString() || '-'}</TableCell>
+                          <TableCell>₹{txn.dailyLimit?.toLocaleString() || '-'}</TableCell>
+                          <TableCell>
+                            <Badge variant={txn.isActive ? 'default' : 'secondary'}>
+                              {txn.isActive ? 'Active' : 'Inactive'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Button variant="ghost" size="sm">Edit</Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Communications Tab */}
+          <TabsContent value="communications">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Communication Templates</CardTitle>
+                    <CardDescription>
+                      Manage customer notifications and automated messages
+                    </CardDescription>
+                  </div>
+                  <Button onClick={handleAddCommunication}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Template
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {communications.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No communication templates configured. Add templates for customer notifications.
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Template Code</TableHead>
+                        <TableHead>Event Type</TableHead>
+                        <TableHead>Channel</TableHead>
+                        <TableHead>Communication Type</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {communications.map((comm) => (
+                        <TableRow key={comm.commId}>
+                          <TableCell className="font-medium">{comm.communicationCode}</TableCell>
+                          <TableCell>{comm.eventType}</TableCell>
+                          <TableCell>{comm.communicationChannel}</TableCell>
+                          <TableCell>{comm.communicationType}</TableCell>
+                          <TableCell>
+                            <Badge variant={comm.isActive ? 'default' : 'secondary'}>
+                              {comm.isActive ? 'Active' : 'Inactive'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Button variant="ghost" size="sm">Edit</Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Roles Tab */}
+          <TabsContent value="roles">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Roles & Permissions</CardTitle>
+                    <CardDescription>
+                      Configure which user roles can access this product
+                    </CardDescription>
+                  </div>
+                  <Button onClick={handleAddRole}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Role
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {roles.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No roles configured. Add role access configurations.
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Role Code</TableHead>
+                        <TableHead>Role Type</TableHead>
+                        <TableHead>Role Name</TableHead>
+                        <TableHead>Permissions</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {roles.map((role) => (
+                        <TableRow key={role.roleId}>
+                          <TableCell className="font-medium">{role.roleCode}</TableCell>
+                          <TableCell>{role.roleType}</TableCell>
+                          <TableCell>{role.roleName}</TableCell>
+                          <TableCell className="max-w-xs truncate">{role.permissions}</TableCell>
+                          <TableCell>
+                            <Badge variant={role.isActive ? 'default' : 'secondary'}>
+                              {role.isActive ? 'Active' : 'Inactive'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Button variant="ghost" size="sm">Edit</Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Balance Types Tab */}
+          <TabsContent value="balances">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Balance Types</CardTitle>
+                    <CardDescription>
+                      Configure which balance types are applicable for this product
+                    </CardDescription>
+                  </div>
+                  <Button onClick={handleAddBalance}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Balance Type
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {balances.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No balance types configured. Add balance type configurations.
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Balance Type</TableHead>
+                        <TableHead>Description</TableHead>
+                        <TableHead>Min Balance</TableHead>
+                        <TableHead>Max Balance</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {balances.map((balance) => (
+                        <TableRow key={balance.balanceId}>
+                          <TableCell className="font-medium">{balance.balanceType}</TableCell>
+                          <TableCell>{balance.description || '-'}</TableCell>
+                          <TableCell>₹{balance.minBalance?.toLocaleString() || '-'}</TableCell>
+                          <TableCell>₹{balance.maxBalance?.toLocaleString() || '-'}</TableCell>
+                          <TableCell>
+                            <Badge variant={balance.isActive ? 'default' : 'secondary'}>
+                              {balance.isActive ? 'Active' : 'Inactive'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Button variant="ghost" size="sm">Edit</Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+};
+
+export default ProductDetails;

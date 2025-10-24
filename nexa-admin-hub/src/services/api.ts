@@ -229,7 +229,11 @@ export const authAPI = {
 
 // Product APIs
 export const productAPI = {
-  getAllProducts: () => apiFetch(`${API_URLS.PRODUCT}/api/products`),
+  // Core Product Management
+  getAllProducts: (params?: { page?: number; size?: number; sort?: string }) => {
+    const queryParams = params ? `?${new URLSearchParams(params as any)}` : '';
+    return apiFetch(`${API_URLS.PRODUCT}/api/products${queryParams}`);
+  },
   
   getProductByCode: (productCode: string) => 
     apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}`),
@@ -253,6 +257,167 @@ export const productAPI = {
   
   searchProducts: (params: any) => 
     apiFetch(`${API_URLS.PRODUCT}/api/products/search?${new URLSearchParams(params)}`),
+
+  // Interest Rates Management
+  getInterestRates: (productCode: string, params?: { page?: number; size?: number }) => {
+    const queryParams = params ? `?${new URLSearchParams(params as any)}` : '';
+    return apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/interest-rates${queryParams}`);
+  },
+  
+  addInterestRate: (productCode: string, data: any) =>
+    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/interest-rates`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  
+  updateInterestRate: (productCode: string, interestId: string, data: any) =>
+    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/interest-rates/${interestId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  
+  deleteInterestRate: (productCode: string, interestId: string) =>
+    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/interest-rates/${interestId}`, {
+      method: 'DELETE',
+    }),
+
+  // Charges & Fees Management
+  getCharges: (productCode: string, params?: { page?: number; size?: number }) => {
+    const queryParams = params ? `?${new URLSearchParams(params as any)}` : '';
+    return apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/charges${queryParams}`);
+  },
+  
+  addCharge: (productCode: string, data: any) =>
+    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/charges`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  
+  updateCharge: (productCode: string, chargeId: string, data: any) =>
+    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/charges/${chargeId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  
+  deleteCharge: (productCode: string, chargeId: string) =>
+    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/charges/${chargeId}`, {
+      method: 'DELETE',
+    }),
+
+  // Balance Types Management
+  getBalances: (productCode: string, params?: { page?: number; size?: number }) => {
+    const queryParams = params ? `?${new URLSearchParams(params as any)}` : '';
+    return apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/balances${queryParams}`);
+  },
+  
+  addBalance: (productCode: string, data: any) =>
+    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/balances`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  
+  updateBalance: (productCode: string, balanceType: string, data: any) =>
+    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/balances/${balanceType}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  
+  deleteBalance: (productCode: string, balanceType: string) =>
+    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/balances/${balanceType}`, {
+      method: 'DELETE',
+    }),
+
+  // Business Rules Management
+  getRules: (productCode: string, params?: { page?: number; size?: number }) => {
+    const queryParams = params ? `?${new URLSearchParams(params as any)}` : '';
+    return apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/rules${queryParams}`);
+  },
+  
+  addRule: (productCode: string, data: any) =>
+    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/rules`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  
+  updateRule: (productCode: string, ruleId: string, data: any) =>
+    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/rules/${ruleId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  
+  deleteRule: (productCode: string, ruleId: string) =>
+    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/rules/${ruleId}`, {
+      method: 'DELETE',
+    }),
+
+  // Transaction Types Management
+  getTransactions: (productCode: string, params?: { page?: number; size?: number }) => {
+    const queryParams = params ? `?${new URLSearchParams(params as any)}` : '';
+    return apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/transactions${queryParams}`);
+  },
+  
+  addTransaction: (productCode: string, data: any) =>
+    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/transactions`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  
+  updateTransaction: (productCode: string, transactionCode: string, data: any) =>
+    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/transactions/${transactionCode}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  
+  deleteTransaction: (productCode: string, transactionCode: string) =>
+    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/transactions/${transactionCode}`, {
+      method: 'DELETE',
+    }),
+
+  // Communication Templates Management
+  getCommunications: (productCode: string, params?: { page?: number; size?: number }) => {
+    const queryParams = params ? `?${new URLSearchParams(params as any)}` : '';
+    return apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/communications${queryParams}`);
+  },
+  
+  addCommunication: (productCode: string, data: any) =>
+    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/communications`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  
+  updateCommunication: (productCode: string, commId: string, data: any) =>
+    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/communications/${commId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  
+  deleteCommunication: (productCode: string, commId: string) =>
+    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/communications/${commId}`, {
+      method: 'DELETE',
+    }),
+
+  // Roles & Permissions Management
+  getRoles: (productCode: string, params?: { page?: number; size?: number }) => {
+    const queryParams = params ? `?${new URLSearchParams(params as any)}` : '';
+    return apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/roles${queryParams}`);
+  },
+  
+  addRole: (productCode: string, data: any) =>
+    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/roles`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  
+  updateRole: (productCode: string, roleId: string, data: any) =>
+    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/roles/${roleId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  
+  deleteRole: (productCode: string, roleId: string) =>
+    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/roles/${roleId}`, {
+      method: 'DELETE',
+    }),
 };
 
 // FD Calculator APIs

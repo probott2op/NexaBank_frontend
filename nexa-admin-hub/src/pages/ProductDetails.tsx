@@ -244,10 +244,10 @@ const ProductDetails = () => {
                       <TableRow>
                         <TableHead>Rate Code</TableHead>
                         <TableHead>Term (Months)</TableHead>
-                        <TableHead>Rate (%)</TableHead>
-                        <TableHead>Min Balance</TableHead>
-                        <TableHead>Max Balance</TableHead>
-                        <TableHead>Status</TableHead>
+                        <TableHead>Cumulative</TableHead>
+                        <TableHead>Monthly</TableHead>
+                        <TableHead>Quarterly</TableHead>
+                        <TableHead>Yearly</TableHead>
                         <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -256,14 +256,10 @@ const ProductDetails = () => {
                         <TableRow key={rate.rateId}>
                           <TableCell className="font-medium">{rate.rateCode}</TableCell>
                           <TableCell>{rate.termInMonths}</TableCell>
-                          <TableCell>{rate.interestRate}%</TableCell>
-                          <TableCell>{rate.minBalance?.toLocaleString() || '-'}</TableCell>
-                          <TableCell>{rate.maxBalance?.toLocaleString() || '-'}</TableCell>
-                          <TableCell>
-                            <Badge variant={rate.isActive ? 'default' : 'secondary'}>
-                              {rate.isActive ? 'Active' : 'Inactive'}
-                            </Badge>
-                          </TableCell>
+                          <TableCell>{rate.rateCumulative}%</TableCell>
+                          <TableCell>{rate.rateNonCumulativeMonthly}%</TableCell>
+                          <TableCell>{rate.rateNonCumulativeQuarterly}%</TableCell>
+                          <TableCell>{rate.rateNonCumulativeYearly}%</TableCell>
                           <TableCell>
                             <Button variant="ghost" size="sm">Edit</Button>
                           </TableCell>
@@ -304,10 +300,10 @@ const ProductDetails = () => {
                       <TableRow>
                         <TableHead>Charge Code</TableHead>
                         <TableHead>Charge Name</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Amount</TableHead>
+                        <TableHead>Charge Type</TableHead>
+                        <TableHead>Calculation Type</TableHead>
+                        <TableHead>Value</TableHead>
                         <TableHead>Frequency</TableHead>
-                        <TableHead>Status</TableHead>
                         <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -316,18 +312,14 @@ const ProductDetails = () => {
                         <TableRow key={charge.chargeId}>
                           <TableCell className="font-medium">{charge.chargeCode}</TableCell>
                           <TableCell>{charge.chargeName}</TableCell>
+                          <TableCell>{charge.chargeType}</TableCell>
                           <TableCell>{charge.calculationType}</TableCell>
                           <TableCell>
                             {charge.calculationType === 'PERCENTAGE' 
-                              ? `${charge.chargeAmount}%` 
-                              : `₹${charge.chargeAmount}`}
+                              ? `${charge.chargeValue}%` 
+                              : `₹${charge.chargeValue}`}
                           </TableCell>
                           <TableCell>{charge.frequency}</TableCell>
-                          <TableCell>
-                            <Badge variant={charge.isActive ? 'default' : 'secondary'}>
-                              {charge.isActive ? 'Active' : 'Inactive'}
-                            </Badge>
-                          </TableCell>
                           <TableCell>
                             <Button variant="ghost" size="sm">Edit</Button>
                           </TableCell>
@@ -368,9 +360,10 @@ const ProductDetails = () => {
                       <TableRow>
                         <TableHead>Rule Code</TableHead>
                         <TableHead>Rule Name</TableHead>
+                        <TableHead>Rule Type</TableHead>
+                        <TableHead>Data Type</TableHead>
                         <TableHead>Validation Type</TableHead>
                         <TableHead>Rule Value</TableHead>
-                        <TableHead>Status</TableHead>
                         <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -379,13 +372,10 @@ const ProductDetails = () => {
                         <TableRow key={rule.ruleId}>
                           <TableCell className="font-medium">{rule.ruleCode}</TableCell>
                           <TableCell>{rule.ruleName}</TableCell>
+                          <TableCell>{rule.ruleType}</TableCell>
+                          <TableCell>{rule.dataType}</TableCell>
                           <TableCell>{rule.validationType}</TableCell>
                           <TableCell className="max-w-xs truncate">{rule.ruleValue}</TableCell>
-                          <TableCell>
-                            <Badge variant={rule.isActive ? 'default' : 'secondary'}>
-                              {rule.isActive ? 'Active' : 'Inactive'}
-                            </Badge>
-                          </TableCell>
                           <TableCell>
                             <Button variant="ghost" size="sm">Edit</Button>
                           </TableCell>
@@ -425,11 +415,11 @@ const ProductDetails = () => {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Transaction Code</TableHead>
+                        <TableHead>Transaction Name</TableHead>
                         <TableHead>Transaction Type</TableHead>
+                        <TableHead>Debit/Credit</TableHead>
                         <TableHead>Min Amount</TableHead>
                         <TableHead>Max Amount</TableHead>
-                        <TableHead>Daily Limit</TableHead>
-                        <TableHead>Status</TableHead>
                         <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -437,15 +427,11 @@ const ProductDetails = () => {
                       {transactions.map((txn) => (
                         <TableRow key={txn.transactionId}>
                           <TableCell className="font-medium">{txn.transactionCode}</TableCell>
+                          <TableCell>{txn.transactionName}</TableCell>
                           <TableCell>{txn.transactionType}</TableCell>
-                          <TableCell>₹{txn.minAmount?.toLocaleString() || '-'}</TableCell>
-                          <TableCell>₹{txn.maxAmount?.toLocaleString() || '-'}</TableCell>
-                          <TableCell>₹{txn.dailyLimit?.toLocaleString() || '-'}</TableCell>
-                          <TableCell>
-                            <Badge variant={txn.isActive ? 'default' : 'secondary'}>
-                              {txn.isActive ? 'Active' : 'Inactive'}
-                            </Badge>
-                          </TableCell>
+                          <TableCell>{txn.debitCreditIndicator}</TableCell>
+                          <TableCell>₹{txn.minimumAmount?.toLocaleString() || '-'}</TableCell>
+                          <TableCell>₹{txn.maximumAmount?.toLocaleString() || '-'}</TableCell>
                           <TableCell>
                             <Button variant="ghost" size="sm">Edit</Button>
                           </TableCell>
@@ -484,26 +470,22 @@ const ProductDetails = () => {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Template Code</TableHead>
-                        <TableHead>Event Type</TableHead>
+                        <TableHead>Communication Code</TableHead>
+                        <TableHead>Communication Name</TableHead>
+                        <TableHead>Type</TableHead>
                         <TableHead>Channel</TableHead>
-                        <TableHead>Communication Type</TableHead>
-                        <TableHead>Status</TableHead>
+                        <TableHead>Frequency Limit</TableHead>
                         <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {communications.map((comm) => (
                         <TableRow key={comm.commId}>
-                          <TableCell className="font-medium">{comm.communicationCode}</TableCell>
-                          <TableCell>{comm.eventType}</TableCell>
-                          <TableCell>{comm.communicationChannel}</TableCell>
+                          <TableCell className="font-medium">{comm.communicationCode || comm.commCode}</TableCell>
+                          <TableCell>{comm.communicationName}</TableCell>
                           <TableCell>{comm.communicationType}</TableCell>
-                          <TableCell>
-                            <Badge variant={comm.isActive ? 'default' : 'secondary'}>
-                              {comm.isActive ? 'Active' : 'Inactive'}
-                            </Badge>
-                          </TableCell>
+                          <TableCell>{comm.communicationChannel || comm.channel}</TableCell>
+                          <TableCell>{comm.frequencyLimit || '-'}</TableCell>
                           <TableCell>
                             <Button variant="ghost" size="sm">Edit</Button>
                           </TableCell>
@@ -543,10 +525,9 @@ const ProductDetails = () => {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Role Code</TableHead>
-                        <TableHead>Role Type</TableHead>
                         <TableHead>Role Name</TableHead>
-                        <TableHead>Permissions</TableHead>
-                        <TableHead>Status</TableHead>
+                        <TableHead>Role Type</TableHead>
+                        <TableHead>Description</TableHead>
                         <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -554,14 +535,9 @@ const ProductDetails = () => {
                       {roles.map((role) => (
                         <TableRow key={role.roleId}>
                           <TableCell className="font-medium">{role.roleCode}</TableCell>
-                          <TableCell>{role.roleType}</TableCell>
                           <TableCell>{role.roleName}</TableCell>
-                          <TableCell className="max-w-xs truncate">{role.permissions}</TableCell>
-                          <TableCell>
-                            <Badge variant={role.isActive ? 'default' : 'secondary'}>
-                              {role.isActive ? 'Active' : 'Inactive'}
-                            </Badge>
-                          </TableCell>
+                          <TableCell>{role.roleType}</TableCell>
+                          <TableCell className="max-w-xs truncate">{role.description || '-'}</TableCell>
                           <TableCell>
                             <Button variant="ghost" size="sm">Edit</Button>
                           </TableCell>
@@ -601,10 +577,7 @@ const ProductDetails = () => {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Balance Type</TableHead>
-                        <TableHead>Description</TableHead>
-                        <TableHead>Min Balance</TableHead>
-                        <TableHead>Max Balance</TableHead>
-                        <TableHead>Status</TableHead>
+                        <TableHead>Created At</TableHead>
                         <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -612,13 +585,10 @@ const ProductDetails = () => {
                       {balances.map((balance) => (
                         <TableRow key={balance.balanceId}>
                           <TableCell className="font-medium">{balance.balanceType}</TableCell>
-                          <TableCell>{balance.description || '-'}</TableCell>
-                          <TableCell>₹{balance.minBalance?.toLocaleString() || '-'}</TableCell>
-                          <TableCell>₹{balance.maxBalance?.toLocaleString() || '-'}</TableCell>
                           <TableCell>
-                            <Badge variant={balance.isActive ? 'default' : 'secondary'}>
-                              {balance.isActive ? 'Active' : 'Inactive'}
-                            </Badge>
+                            {balance.createdAt 
+                              ? new Date(balance.createdAt).toLocaleDateString()
+                              : '-'}
                           </TableCell>
                           <TableCell>
                             <Button variant="ghost" size="sm">Edit</Button>

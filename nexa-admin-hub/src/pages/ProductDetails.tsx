@@ -362,8 +362,8 @@ const ProductDetails = () => {
                           <TableCell>{charge.calculationType}</TableCell>
                           <TableCell>
                             {charge.calculationType === 'PERCENTAGE' 
-                              ? `${charge.chargeValue}%` 
-                              : `₹${charge.chargeValue}`}
+                              ? `${charge.chargeValue || charge.amount}%` 
+                              : `₹${charge.chargeValue || charge.amount}`}
                           </TableCell>
                           <TableCell>{charge.frequency}</TableCell>
                           <TableCell>

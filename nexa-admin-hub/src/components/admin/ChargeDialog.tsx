@@ -32,7 +32,7 @@ export function ChargeDialog({ open, onOpenChange, productCode, charge, onSave }
         chargeName: charge.chargeName || "",
         chargeType: charge.chargeType || "FEE",
         calculationType: charge.calculationType || "FLAT",
-        chargeValue: charge.chargeValue?.toString() || "",
+        chargeValue: (charge.chargeValue || charge.amount)?.toString() || "",
         frequency: charge.frequency || "ONE_TIME",
         debitCredit: charge.debitCredit || "DEBIT",
       });

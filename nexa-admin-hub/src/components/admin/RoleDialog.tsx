@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 
 interface RoleDialogProps {
@@ -19,7 +19,8 @@ export function RoleDialog({ open, onOpenChange, productCode, role, onSave }: Ro
     roleCode: "",
     roleName: "",
     roleType: "",
-    description: "",
+    maxCount: "",
+    mandatory: "false",
   });
 
   useEffect(() => {
@@ -28,14 +29,16 @@ export function RoleDialog({ open, onOpenChange, productCode, role, onSave }: Ro
         roleCode: role.roleCode || "",
         roleName: role.roleName || "",
         roleType: role.roleType || "",
-        description: role.description || "",
+        maxCount: role.maxCount?.toString() || "",
+        mandatory: role.mandatory !== undefined ? role.mandatory.toString() : "false",
       });
     } else {
       setFormData({
         roleCode: "",
         roleName: "",
         roleType: "",
-        description: "",
+        maxCount: "",
+        mandatory: "false",
       });
     }
   }, [role]);
@@ -48,9 +51,10 @@ export function RoleDialog({ open, onOpenChange, productCode, role, onSave }: Ro
         roleCode: formData.roleCode,
         roleName: formData.roleName,
         roleType: formData.roleType,
+        mandatory: formData.mandatory === "true",
       };
 
-      if (formData.description) payload.description = formData.description;
+      if (formData.maxCount) payload.maxCount = parseInt(formData.maxCount);
 
       const { productAPI } = await import("@/services/api");
       
@@ -99,7 +103,7 @@ export function RoleDialog({ open, onOpenChange, productCode, role, onSave }: Ro
                 id="roleName"
                 value={formData.roleName}
                 onChange={(e) => setFormData({ ...formData, roleName: e.target.value })}
-                placeholder="Primary Account Holder"
+                placeholder="OWNER"
                 required
               />
             </div>
@@ -110,7 +114,7 @@ export function RoleDialog({ open, onOpenChange, productCode, role, onSave }: Ro
                 id="roleType"
                 value={formData.roleType}
                 onChange={(e) => setFormData({ ...formData, roleType: e.target.value })}
-                placeholder="OWNER / CO_OWNER / GUARDIAN / NOMINEE / BORROWER / GUARANTOR"
+                placeholder="OWNER / CO_OWNER / GUARDIAN / NOMINEE"
                 required
               />
               <p className="text-sm text-muted-foreground">
@@ -119,14 +123,34 @@ export function RoleDialog({ open, onOpenChange, productCode, role, onSave }: Ro
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Optional description of the role and its responsibilities"
-                rows={4}
+              <Label htmlFor="maxCount">Max Count</Label>
+              <Input
+                id="maxCount"
+                type="number"
+                value={formData.maxCount}
+                onChange={(e) => setFormData({ ...formData, maxCount: e.target.value })}
+                placeholder="1"
+                min="1"
               />
+              <p className="text-sm text-muted-foreground">
+                Maximum number of people allowed for this role
+              </p>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="mandatory">Mandatory *</Label>
+              <Select
+                value={formData.mandatory}
+                onValueChange={(value) => setFormData({ ...formData, mandatory: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Is this role mandatory?" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="true">Yes</SelectItem>
+                  <SelectItem value="false">No</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

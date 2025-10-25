@@ -14,13 +14,22 @@ interface BalanceDialogProps {
 }
 
 export function BalanceDialog({ open, onOpenChange, productCode, balance, onSave }: BalanceDialogProps) {
-  const [balanceType, setBalanceType] = useState("LOAN_PRINCIPAL");
+  const [formData, setFormData] = useState({
+    balanceType: "LOAN_PRINCIPAL",
+    isActive: "true",
+  });
 
   useEffect(() => {
     if (balance) {
-      setBalanceType(balance.balanceType || "LOAN_PRINCIPAL");
+      setFormData({
+        balanceType: balance.balanceType || "LOAN_PRINCIPAL",
+        isActive: balance.isActive !== undefined ? balance.isActive.toString() : "true",
+      });
     } else {
-      setBalanceType("LOAN_PRINCIPAL");
+      setFormData({
+        balanceType: "LOAN_PRINCIPAL",
+        isActive: "true",
+      });
     }
   }, [balance]);
 
@@ -29,7 +38,8 @@ export function BalanceDialog({ open, onOpenChange, productCode, balance, onSave
     
     try {
       const payload = {
-        balanceType: balanceType,
+        balanceType: formData.balanceType,
+        isActive: formData.isActive === "true",
       };
 
       const { productAPI } = await import("@/services/api");
@@ -63,7 +73,11 @@ export function BalanceDialog({ open, onOpenChange, productCode, balance, onSave
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="balanceType">Balance Type *</Label>
-              <Select value={balanceType} onValueChange={setBalanceType} required>
+              <Select 
+                value={formData.balanceType} 
+                onValueChange={(value) => setFormData({ ...formData, balanceType: value })} 
+                required
+              >
                 <SelectTrigger id="balanceType">
                   <SelectValue />
                 </SelectTrigger>
@@ -74,6 +88,22 @@ export function BalanceDialog({ open, onOpenChange, productCode, balance, onSave
                   <SelectItem value="FD_INTEREST">FD Interest</SelectItem>
                   <SelectItem value="OVERDRAFT">Overdraft</SelectItem>
                   <SelectItem value="PENALTY">Penalty</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="isActive">Active Status *</Label>
+              <Select
+                value={formData.isActive}
+                onValueChange={(value) => setFormData({ ...formData, isActive: value })}
+              >
+                <SelectTrigger id="isActive">
+                  <SelectValue placeholder="Select active status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="true">Active</SelectItem>
+                  <SelectItem value="false">Inactive</SelectItem>
                 </SelectContent>
               </Select>
             </div>

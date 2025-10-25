@@ -481,11 +481,8 @@ const ProductDetails = () => {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Transaction Code</TableHead>
-                        <TableHead>Transaction Name</TableHead>
                         <TableHead>Transaction Type</TableHead>
-                        <TableHead>Debit/Credit</TableHead>
-                        <TableHead>Min Amount</TableHead>
-                        <TableHead>Max Amount</TableHead>
+                        <TableHead>Allowed</TableHead>
                         <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -493,11 +490,12 @@ const ProductDetails = () => {
                       {transactions.map((txn) => (
                         <TableRow key={txn.transactionId}>
                           <TableCell className="font-medium">{txn.transactionCode}</TableCell>
-                          <TableCell>{txn.transactionName}</TableCell>
                           <TableCell>{txn.transactionType}</TableCell>
-                          <TableCell>{txn.debitCreditIndicator}</TableCell>
-                          <TableCell>₹{txn.minimumAmount?.toLocaleString() || '-'}</TableCell>
-                          <TableCell>₹{txn.maximumAmount?.toLocaleString() || '-'}</TableCell>
+                          <TableCell>
+                            <Badge variant={txn.allowed ? 'default' : 'secondary'}>
+                              {txn.allowed ? 'Yes' : 'No'}
+                            </Badge>
+                          </TableCell>
                           <TableCell>
                             <Button 
                               variant="ghost" 
@@ -609,7 +607,8 @@ const ProductDetails = () => {
                         <TableHead>Role Code</TableHead>
                         <TableHead>Role Name</TableHead>
                         <TableHead>Role Type</TableHead>
-                        <TableHead>Description</TableHead>
+                        <TableHead>Max Count</TableHead>
+                        <TableHead>Mandatory</TableHead>
                         <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -619,7 +618,12 @@ const ProductDetails = () => {
                           <TableCell className="font-medium">{role.roleCode}</TableCell>
                           <TableCell>{role.roleName}</TableCell>
                           <TableCell>{role.roleType}</TableCell>
-                          <TableCell className="max-w-xs truncate">{role.description || '-'}</TableCell>
+                          <TableCell>{role.maxCount || '-'}</TableCell>
+                          <TableCell>
+                            <Badge variant={role.mandatory ? 'destructive' : 'secondary'}>
+                              {role.mandatory ? 'Yes' : 'No'}
+                            </Badge>
+                          </TableCell>
                           <TableCell>
                             <Button 
                               variant="ghost" 
@@ -666,6 +670,7 @@ const ProductDetails = () => {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Balance Type</TableHead>
+                        <TableHead>Active</TableHead>
                         <TableHead>Created At</TableHead>
                         <TableHead>Actions</TableHead>
                       </TableRow>
@@ -674,6 +679,11 @@ const ProductDetails = () => {
                       {balances.map((balance) => (
                         <TableRow key={balance.balanceId}>
                           <TableCell className="font-medium">{balance.balanceType}</TableCell>
+                          <TableCell>
+                            <Badge variant={balance.isActive ? 'default' : 'secondary'}>
+                              {balance.isActive ? 'Active' : 'Inactive'}
+                            </Badge>
+                          </TableCell>
                           <TableCell>
                             {balance.createdAt 
                               ? new Date(balance.createdAt).toLocaleDateString()

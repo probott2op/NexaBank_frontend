@@ -48,7 +48,7 @@ export const tokenManager = {
   }
 };
 
-// Auto-refresh token every 5 minutes
+// Auto-refresh token before it expires (access token is valid for 10 minutes)
 let refreshInterval: NodeJS.Timeout | null = null;
 
 export const startTokenRefresh = () => {
@@ -57,7 +57,7 @@ export const startTokenRefresh = () => {
     clearInterval(refreshInterval);
   }
   
-  // Refresh token every 5 minutes (300000 ms)
+  // Refresh token every 9 minutes (540000 ms) - before the 10-minute expiry
   refreshInterval = setInterval(async () => {
     const refreshToken = tokenManager.getRefreshToken();
     if (refreshToken) {
@@ -70,10 +70,17 @@ export const startTokenRefresh = () => {
         
         if (response.ok) {
           const result = await response.json();
-          // Handle response with data wrapper
-          const { accessToken, refreshToken: newRefreshToken } = result.data || result;
-          tokenManager.setTokens(accessToken, newRefreshToken);
-          console.log('Token refreshed successfully');
+          // API returns: { success: true, data: { accessToken, refreshToken, ... }, ... }
+          if (result.success && result.data) {
+            const { accessToken, refreshToken: newRefreshToken, user } = result.data;
+            tokenManager.setTokens(accessToken, newRefreshToken);
+            if (user) {
+              tokenManager.setUserInfo(user);
+            }
+            console.log('Token refreshed successfully at', new Date().toLocaleTimeString());
+          } else {
+            throw new Error('Invalid refresh response');
+          }
         } else {
           console.error('Token refresh failed, logging out');
           tokenManager.clearTokens();
@@ -81,9 +88,10 @@ export const startTokenRefresh = () => {
         }
       } catch (error) {
         console.error('Token refresh error:', error);
+        // Don't logout on network errors, only on auth failures
       }
     }
-  }, 300000); // 5 minutes
+  }, 540000); // 9 minutes
 };
 
 export const stopTokenRefresh = () => {
@@ -121,11 +129,18 @@ const apiFetch = async (url: string, options: RequestInit = {}) => {
           });
           
           if (refreshResponse.ok) {
-            const data = await refreshResponse.json();
-            tokenManager.setTokens(data.token, data.refreshToken);
-            
-            // Retry original request with new token
-            return apiFetch(url, options);
+            const result = await refreshResponse.json();
+            // API returns: { success: true, data: { accessToken, refreshToken, user }, ... }
+            if (result.success && result.data) {
+              const { accessToken, refreshToken: newRefreshToken, user } = result.data;
+              tokenManager.setTokens(accessToken, newRefreshToken);
+              if (user) {
+                tokenManager.setUserInfo(user);
+              }
+              
+              // Retry original request with new token
+              return apiFetch(url, options);
+            }
           }
         } catch (error) {
           console.error('Token refresh failed:', error);

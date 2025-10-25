@@ -15,7 +15,8 @@ import {
   ArrowLeftRight, 
   Mail, 
   Users,
-  Plus
+  Plus,
+  Pencil
 } from "lucide-react";
 import {
   Table,
@@ -25,6 +26,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { InterestRateDialog } from "@/components/admin/InterestRateDialog";
+import { ChargeDialog } from "@/components/admin/ChargeDialog";
+import { RuleDialog } from "@/components/admin/RuleDialog";
+import { TransactionDialog } from "@/components/admin/TransactionDialog";
+import { CommunicationDialog } from "@/components/admin/CommunicationDialog";
+import { RoleDialog } from "@/components/admin/RoleDialog";
+import { BalanceDialog } from "@/components/admin/BalanceDialog";
 
 const ProductDetails = () => {
   const { productCode } = useParams<{ productCode: string }>();
@@ -40,6 +48,15 @@ const ProductDetails = () => {
   const [communications, setCommunications] = useState<any[]>([]);
   const [roles, setRoles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Dialog states
+  const [interestRateDialog, setInterestRateDialog] = useState({ open: false, data: null });
+  const [chargeDialog, setChargeDialog] = useState({ open: false, data: null });
+  const [ruleDialog, setRuleDialog] = useState({ open: false, data: null });
+  const [transactionDialog, setTransactionDialog] = useState({ open: false, data: null });
+  const [communicationDialog, setCommunicationDialog] = useState({ open: false, data: null });
+  const [roleDialog, setRoleDialog] = useState({ open: false, data: null });
+  const [balanceDialog, setBalanceDialog] = useState({ open: false, data: null });
 
   useEffect(() => {
     if (productCode) {
@@ -92,39 +109,61 @@ const ProductDetails = () => {
     }
   };
 
+  // Dialog handlers
   const handleAddInterestRate = () => {
-    // TODO: Open dialog to add interest rate
-    toast({ title: "Coming Soon", description: "Interest rate configuration dialog" });
+    setInterestRateDialog({ open: true, data: null });
+  };
+
+  const handleEditInterestRate = (rate: any) => {
+    setInterestRateDialog({ open: true, data: rate });
   };
 
   const handleAddCharge = () => {
-    // TODO: Open dialog to add charge
-    toast({ title: "Coming Soon", description: "Charge configuration dialog" });
+    setChargeDialog({ open: true, data: null });
+  };
+
+  const handleEditCharge = (charge: any) => {
+    setChargeDialog({ open: true, data: charge });
   };
 
   const handleAddRule = () => {
-    // TODO: Open dialog to add rule
-    toast({ title: "Coming Soon", description: "Business rule configuration dialog" });
+    setRuleDialog({ open: true, data: null });
+  };
+
+  const handleEditRule = (rule: any) => {
+    setRuleDialog({ open: true, data: rule });
   };
 
   const handleAddTransaction = () => {
-    // TODO: Open dialog to add transaction type
-    toast({ title: "Coming Soon", description: "Transaction type configuration dialog" });
+    setTransactionDialog({ open: true, data: null });
+  };
+
+  const handleEditTransaction = (transaction: any) => {
+    setTransactionDialog({ open: true, data: transaction });
   };
 
   const handleAddCommunication = () => {
-    // TODO: Open dialog to add communication template
-    toast({ title: "Coming Soon", description: "Communication template configuration dialog" });
+    setCommunicationDialog({ open: true, data: null });
+  };
+
+  const handleEditCommunication = (communication: any) => {
+    setCommunicationDialog({ open: true, data: communication });
   };
 
   const handleAddRole = () => {
-    // TODO: Open dialog to add role
-    toast({ title: "Coming Soon", description: "Role configuration dialog" });
+    setRoleDialog({ open: true, data: null });
+  };
+
+  const handleEditRole = (role: any) => {
+    setRoleDialog({ open: true, data: role });
   };
 
   const handleAddBalance = () => {
-    // TODO: Open dialog to add balance type
-    toast({ title: "Coming Soon", description: "Balance type configuration dialog" });
+    setBalanceDialog({ open: true, data: null });
+  };
+
+  const handleEditBalance = (balance: any) => {
+    setBalanceDialog({ open: true, data: balance });
   };
 
   if (loading) {
@@ -261,7 +300,14 @@ const ProductDetails = () => {
                           <TableCell>{rate.rateNonCumulativeQuarterly}%</TableCell>
                           <TableCell>{rate.rateNonCumulativeYearly}%</TableCell>
                           <TableCell>
-                            <Button variant="ghost" size="sm">Edit</Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleEditInterestRate(rate)}
+                            >
+                              <Pencil className="h-4 w-4 mr-2" />
+                              Edit
+                            </Button>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -321,7 +367,14 @@ const ProductDetails = () => {
                           </TableCell>
                           <TableCell>{charge.frequency}</TableCell>
                           <TableCell>
-                            <Button variant="ghost" size="sm">Edit</Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleEditCharge(charge)}
+                            >
+                              <Pencil className="h-4 w-4 mr-2" />
+                              Edit
+                            </Button>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -377,7 +430,14 @@ const ProductDetails = () => {
                           <TableCell>{rule.validationType}</TableCell>
                           <TableCell className="max-w-xs truncate">{rule.ruleValue}</TableCell>
                           <TableCell>
-                            <Button variant="ghost" size="sm">Edit</Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleEditRule(rule)}
+                            >
+                              <Pencil className="h-4 w-4 mr-2" />
+                              Edit
+                            </Button>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -433,7 +493,14 @@ const ProductDetails = () => {
                           <TableCell>₹{txn.minimumAmount?.toLocaleString() || '-'}</TableCell>
                           <TableCell>₹{txn.maximumAmount?.toLocaleString() || '-'}</TableCell>
                           <TableCell>
-                            <Button variant="ghost" size="sm">Edit</Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleEditTransaction(txn)}
+                            >
+                              <Pencil className="h-4 w-4 mr-2" />
+                              Edit
+                            </Button>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -487,7 +554,14 @@ const ProductDetails = () => {
                           <TableCell>{comm.communicationChannel || comm.channel}</TableCell>
                           <TableCell>{comm.frequencyLimit || '-'}</TableCell>
                           <TableCell>
-                            <Button variant="ghost" size="sm">Edit</Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleEditCommunication(comm)}
+                            >
+                              <Pencil className="h-4 w-4 mr-2" />
+                              Edit
+                            </Button>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -539,7 +613,14 @@ const ProductDetails = () => {
                           <TableCell>{role.roleType}</TableCell>
                           <TableCell className="max-w-xs truncate">{role.description || '-'}</TableCell>
                           <TableCell>
-                            <Button variant="ghost" size="sm">Edit</Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleEditRole(role)}
+                            >
+                              <Pencil className="h-4 w-4 mr-2" />
+                              Edit
+                            </Button>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -591,7 +672,14 @@ const ProductDetails = () => {
                               : '-'}
                           </TableCell>
                           <TableCell>
-                            <Button variant="ghost" size="sm">Edit</Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleEditBalance(balance)}
+                            >
+                              <Pencil className="h-4 w-4 mr-2" />
+                              Edit
+                            </Button>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -603,6 +691,63 @@ const ProductDetails = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Dialogs */}
+      <InterestRateDialog
+        open={interestRateDialog.open}
+        onOpenChange={(open) => setInterestRateDialog({ ...interestRateDialog, open })}
+        productCode={productCode!}
+        interestRate={interestRateDialog.data}
+        onSave={fetchAllData}
+      />
+
+      <ChargeDialog
+        open={chargeDialog.open}
+        onOpenChange={(open) => setChargeDialog({ ...chargeDialog, open })}
+        productCode={productCode!}
+        charge={chargeDialog.data}
+        onSave={fetchAllData}
+      />
+
+      <RuleDialog
+        open={ruleDialog.open}
+        onOpenChange={(open) => setRuleDialog({ ...ruleDialog, open })}
+        productCode={productCode!}
+        rule={ruleDialog.data}
+        onSave={fetchAllData}
+      />
+
+      <TransactionDialog
+        open={transactionDialog.open}
+        onOpenChange={(open) => setTransactionDialog({ ...transactionDialog, open })}
+        productCode={productCode!}
+        transaction={transactionDialog.data}
+        onSave={fetchAllData}
+      />
+
+      <CommunicationDialog
+        open={communicationDialog.open}
+        onOpenChange={(open) => setCommunicationDialog({ ...communicationDialog, open })}
+        productCode={productCode!}
+        communication={communicationDialog.data}
+        onSave={fetchAllData}
+      />
+
+      <RoleDialog
+        open={roleDialog.open}
+        onOpenChange={(open) => setRoleDialog({ ...roleDialog, open })}
+        productCode={productCode!}
+        role={roleDialog.data}
+        onSave={fetchAllData}
+      />
+
+      <BalanceDialog
+        open={balanceDialog.open}
+        onOpenChange={(open) => setBalanceDialog({ ...balanceDialog, open })}
+        productCode={productCode!}
+        balance={balanceDialog.data}
+        onSave={fetchAllData}
+      />
     </div>
   );
 };

@@ -33,7 +33,7 @@ export function CommunicationDialog({ open, onOpenChange, productCode, communica
         communicationName: communication.communicationName || "",
         communicationType: communication.communicationType || "ALERT",
         communicationChannel: communication.communicationChannel || communication.channel || "EMAIL",
-        templateContent: communication.templateContent || "",
+        templateContent: communication.templateContent || communication.template || "",
         frequencyLimit: communication.frequencyLimit?.toString() || "",
         description: communication.description || "",
       });

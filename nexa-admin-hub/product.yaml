@@ -5761,6 +5761,8 @@ components:
           format: uuid
         chargeCode:
           type: string
+        chargeName:
+          type: string
         chargeType:
           type: string
           enum:
@@ -5782,6 +5784,11 @@ components:
             - ANNUALLY
         amount:
           type: number
+        debitCredit:
+          type: string
+          enum:
+            - DEBIT
+            - CREDIT
     ProductCommunicationDTO:
       type: object
       properties:
@@ -5923,6 +5930,11 @@ components:
             - GUARANTOR
         roleName:
           type: string
+        maxCount:
+          type: integer
+          format: int32
+        mandatory:
+          type: boolean
     ProductRuleDTO:
       type: object
       properties:
@@ -5975,8 +5987,8 @@ components:
             - INTEREST_ACCRUED
             - DISBURSEMENT
             - PAYMENT
-        amountLimit:
-          type: number
+        allowed:
+          type: boolean
     ProductTransactionRequestDTO:
       type: object
       properties:
@@ -6243,12 +6255,12 @@ components:
     Page:
       type: object
       properties:
-        totalElements:
-          type: integer
-          format: int64
         totalPages:
           type: integer
           format: int32
+        totalElements:
+          type: integer
+          format: int64
         first:
           type: boolean
         last:
@@ -6264,11 +6276,11 @@ components:
           format: int32
         sort:
           $ref: '#/components/schemas/SortObject'
+        pageable:
+          $ref: '#/components/schemas/PageableObject'
         numberOfElements:
           type: integer
           format: int32
-        pageable:
-          $ref: '#/components/schemas/PageableObject'
         empty:
           type: boolean
     PageableObject:
@@ -6279,8 +6291,6 @@ components:
           format: int64
         sort:
           $ref: '#/components/schemas/SortObject'
-        unpaged:
-          type: boolean
         paged:
           type: boolean
         pageNumber:
@@ -6289,6 +6299,8 @@ components:
         pageSize:
           type: integer
           format: int32
+        unpaged:
+          type: boolean
     SortObject:
       type: object
       properties:
@@ -6301,12 +6313,12 @@ components:
     PageProductChargeDTO:
       type: object
       properties:
-        totalElements:
-          type: integer
-          format: int64
         totalPages:
           type: integer
           format: int32
+        totalElements:
+          type: integer
+          format: int64
         first:
           type: boolean
         last:
@@ -6323,11 +6335,11 @@ components:
           format: int32
         sort:
           $ref: '#/components/schemas/SortObject'
+        pageable:
+          $ref: '#/components/schemas/PageableObject'
         numberOfElements:
           type: integer
           format: int32
-        pageable:
-          $ref: '#/components/schemas/PageableObject'
         empty:
           type: boolean
   securitySchemes:

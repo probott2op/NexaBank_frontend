@@ -350,6 +350,7 @@ const ProductDetails = () => {
                         <TableHead>Calculation Type</TableHead>
                         <TableHead>Value</TableHead>
                         <TableHead>Frequency</TableHead>
+                        <TableHead>Debit/Credit</TableHead>
                         <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -366,6 +367,11 @@ const ProductDetails = () => {
                               : `₹${charge.chargeValue || charge.amount}`}
                           </TableCell>
                           <TableCell>{charge.frequency}</TableCell>
+                          <TableCell>
+                            <Badge variant={charge.debitCredit === 'DEBIT' ? 'destructive' : 'default'}>
+                              {charge.debitCredit}
+                            </Badge>
+                          </TableCell>
                           <TableCell>
                             <Button 
                               variant="ghost" 
@@ -537,10 +543,11 @@ const ProductDetails = () => {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Communication Code</TableHead>
-                        <TableHead>Communication Name</TableHead>
+                        <TableHead>Comm Code</TableHead>
                         <TableHead>Type</TableHead>
                         <TableHead>Channel</TableHead>
+                        <TableHead>Event</TableHead>
+                        <TableHead>Template</TableHead>
                         <TableHead>Frequency Limit</TableHead>
                         <TableHead>Actions</TableHead>
                       </TableRow>
@@ -549,9 +556,10 @@ const ProductDetails = () => {
                       {communications.map((comm) => (
                         <TableRow key={comm.commId}>
                           <TableCell className="font-medium">{comm.communicationCode || comm.commCode}</TableCell>
-                          <TableCell>{comm.communicationName}</TableCell>
                           <TableCell>{comm.communicationType}</TableCell>
                           <TableCell>{comm.communicationChannel || comm.channel}</TableCell>
+                          <TableCell>{comm.event || '-'}</TableCell>
+                          <TableCell className="max-w-xs truncate">{comm.template || '-'}</TableCell>
                           <TableCell>{comm.frequencyLimit || '-'}</TableCell>
                           <TableCell>
                             <Button 

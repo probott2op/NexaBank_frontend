@@ -16,8 +16,8 @@ export const ProductsShowcase = () => {
         const { productAPI } = await import("@/services/api");
         const response = await productAPI.getAllProducts();
         console.log("ProductsShowcase API response:", response);
-        // The API returns { data: [...], totalPages, totalElements, etc }
-        const productsData = response?.data || response || [];
+        // The API returns paginated response with products in 'content' array
+        const productsData = response?.content || [];
         console.log("ProductsShowcase products data:", productsData);
         setProducts(Array.isArray(productsData) ? productsData : []);
         

@@ -433,6 +433,60 @@ export const productAPI = {
     apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/roles/${roleId}`, {
       method: 'DELETE',
     }),
+
+  // Audit Trail APIs
+  // Interest Rates Audit Trail
+  getInterestRateAuditTrail: (productCode: string, rateCode: string) =>
+    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/interest-rates/${rateCode}/audit-trail`),
+  
+  getAllInterestRatesAuditTrail: (productCode: string) =>
+    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/interest-rates/audit-trail`),
+
+  // Charges Audit Trail
+  getChargeAuditTrail: (productCode: string, chargeCode: string) =>
+    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/charges/${chargeCode}/audit-trail`),
+  
+  getAllChargesAuditTrail: (productCode: string) =>
+    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/charges/audit-trail`),
+
+  // Balances Audit Trail
+  getBalanceAuditTrail: (productCode: string, balanceType: string) =>
+    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/balances/${balanceType}/audit-trail`),
+  
+  getAllBalancesAuditTrail: (productCode: string) =>
+    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/balances/audit-trail`),
+
+  // Rules Audit Trail
+  getRuleAuditTrail: (productCode: string, ruleCode: string) =>
+    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/rules/${ruleCode}/audit-trail`),
+  
+  getAllRulesAuditTrail: (productCode: string) =>
+    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/rules/audit-trail`),
+
+  // Transactions Audit Trail
+  getTransactionAuditTrail: (productCode: string, transactionCode: string) =>
+    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/transactions/${transactionCode}/audit-trail`),
+  
+  getAllTransactionsAuditTrail: (productCode: string) =>
+    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/transactions/audit-trail`),
+
+  // Communications Audit Trail
+  getCommunicationAuditTrail: (productCode: string, commCode: string) =>
+    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/communications/${commCode}/audit-trail`),
+  
+  getAllCommunicationsAuditTrail: (productCode: string) =>
+    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/communications/audit-trail`),
+
+  // Roles Audit Trail
+  getRoleAuditTrail: (productCode: string, roleCode: string) =>
+    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/roles/${roleCode}/audit-trail`),
+  
+  getAllRolesAuditTrail: (productCode: string) =>
+    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/roles/audit-trail`),
+
+  // Product Audit Trail
+  getProductAuditTrail: (productCode: string) =>
+    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/audit-trail`),
 };
 
 // FD Calculator APIs

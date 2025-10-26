@@ -54,8 +54,8 @@ export const FDCalculator = () => {
         const { productAPI } = await import("@/services/api");
         const response = await productAPI.getAllProducts();
         console.log("Products API response:", response);
-        // The API returns { data: [...], totalPages, totalElements, etc }
-        const productsData = response?.data || response || [];
+        // The API returns paginated response with products in 'content' array
+        const productsData = response?.content || [];
         console.log("Products data:", productsData);
         setProducts(Array.isArray(productsData) ? productsData : []);
       } catch (error) {
@@ -75,6 +75,16 @@ export const FDCalculator = () => {
       toast({
         title: "Missing Information",
         description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate that categories are different if both are selected
+    if (category1 && category2 && category1 === category2) {
+      toast({
+        title: "Invalid Categories",
+        description: "Please select different categories. You cannot select the same category twice.",
         variant: "destructive",
       });
       return;
@@ -108,10 +118,43 @@ export const FDCalculator = () => {
         payload.payout_freq = payoutFreq;
       }
 
-      // Call FD Calculation API
-      const response = await fdCalcAPI.calculate(payload);
+      // Call FD Calculation API directly to get proper error response
+      const token = tokenManager.getAccessToken();
+      const response = await fetch('http://localhost:8081/api/fd/calculate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+        body: JSON.stringify(payload),
+      });
 
-      setCalculationResult(response);
+      if (!response.ok) {
+        // Handle error response
+        const errorData = await response.text();
+        console.error("API Error Response:", errorData);
+        
+        let errorMessage = "Failed to calculate FD. Please try again.";
+        
+        try {
+          // Try to parse as JSON
+          const jsonError = JSON.parse(errorData);
+          errorMessage = jsonError.error || jsonError.message || errorData;
+        } catch {
+          // If not JSON, use the text directly
+          errorMessage = errorData || `HTTP Error ${response.status}`;
+        }
+        
+        toast({
+          title: "Calculation Failed",
+          description: errorMessage,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const result = await response.json();
+      setCalculationResult(result);
 
       toast({
         title: "Calculation Complete",
@@ -119,6 +162,8 @@ export const FDCalculator = () => {
       });
       
     } catch (error: any) {
+      console.error("Calculation error:", error);
+      
       toast({
         title: "Calculation Failed",
         description: error.message || "Failed to calculate FD. Please try again.",
@@ -354,7 +399,11 @@ export const FDCalculator = () => {
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">Interest Earned</p>
                   <p className="text-2xl font-bold text-success">
-                    ₹{calculationResult.interest_earned?.toLocaleString('en-IN')}
+                    ₹{(() => {
+                      const principalNum = parseFloat(principal);
+                      const interest = calculationResult.maturity_value - principalNum;
+                      return interest.toLocaleString('en-IN');
+                    })()}
                   </p>
                 </div>
                 <div className="space-y-1">

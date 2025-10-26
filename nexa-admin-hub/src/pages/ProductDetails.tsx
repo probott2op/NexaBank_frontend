@@ -16,7 +16,8 @@ import {
   Mail, 
   Users,
   Plus,
-  Pencil
+  Pencil,
+  History
 } from "lucide-react";
 import {
   Table,
@@ -33,6 +34,7 @@ import { TransactionDialog } from "@/components/admin/TransactionDialog";
 import { CommunicationDialog } from "@/components/admin/CommunicationDialog";
 import { RoleDialog } from "@/components/admin/RoleDialog";
 import { BalanceDialog } from "@/components/admin/BalanceDialog";
+import { AuditTrailDialog } from "@/components/admin/AuditTrailDialog";
 
 const ProductDetails = () => {
   const { productCode } = useParams<{ productCode: string }>();
@@ -57,6 +59,19 @@ const ProductDetails = () => {
   const [communicationDialog, setCommunicationDialog] = useState({ open: false, data: null });
   const [roleDialog, setRoleDialog] = useState({ open: false, data: null });
   const [balanceDialog, setBalanceDialog] = useState({ open: false, data: null });
+  
+  // Audit Trail Dialog state
+  const [auditTrailDialog, setAuditTrailDialog] = useState<{
+    open: boolean;
+    category: "interest-rates" | "charges" | "balances" | "rules" | "transactions" | "communications" | "roles" | null;
+    categoryLabel: string;
+    itemCode?: string; // Optional: for individual item audit trail
+  }>({
+    open: false,
+    category: null,
+    categoryLabel: "",
+    itemCode: undefined,
+  });
 
   useEffect(() => {
     if (productCode) {
@@ -266,10 +281,23 @@ const ProductDetails = () => {
                       Manage tiered interest rates and balance ranges
                     </CardDescription>
                   </div>
-                  <Button onClick={handleAddInterestRate}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Rate Tier
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setAuditTrailDialog({
+                        open: true,
+                        category: "interest-rates",
+                        categoryLabel: "Interest Rates"
+                      })}
+                    >
+                      <History className="h-4 w-4 mr-2" />
+                      View Audit Trail
+                    </Button>
+                    <Button onClick={handleAddInterestRate}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Rate Tier
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -300,14 +328,29 @@ const ProductDetails = () => {
                           <TableCell>{rate.rateNonCumulativeQuarterly}%</TableCell>
                           <TableCell>{rate.rateNonCumulativeYearly}%</TableCell>
                           <TableCell>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => handleEditInterestRate(rate)}
-                            >
-                              <Pencil className="h-4 w-4 mr-2" />
-                              Edit
-                            </Button>
+                            <div className="flex gap-2">
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleEditInterestRate(rate)}
+                              >
+                                <Pencil className="h-4 w-4 mr-2" />
+                                Edit
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => setAuditTrailDialog({
+                                  open: true,
+                                  category: "interest-rates",
+                                  categoryLabel: "Interest Rates",
+                                  itemCode: rate.rateCode
+                                })}
+                              >
+                                <History className="h-4 w-4 mr-2" />
+                                History
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -329,10 +372,23 @@ const ProductDetails = () => {
                       Manage account maintenance fees, transaction charges, and penalties
                     </CardDescription>
                   </div>
-                  <Button onClick={handleAddCharge}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Charge
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setAuditTrailDialog({
+                        open: true,
+                        category: "charges",
+                        categoryLabel: "Charges & Fees"
+                      })}
+                    >
+                      <History className="h-4 w-4 mr-2" />
+                      View Audit Trail
+                    </Button>
+                    <Button onClick={handleAddCharge}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Charge
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -373,14 +429,29 @@ const ProductDetails = () => {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => handleEditCharge(charge)}
-                            >
-                              <Pencil className="h-4 w-4 mr-2" />
-                              Edit
-                            </Button>
+                            <div className="flex gap-2">
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleEditCharge(charge)}
+                              >
+                                <Pencil className="h-4 w-4 mr-2" />
+                                Edit
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => setAuditTrailDialog({
+                                  open: true,
+                                  category: "charges",
+                                  categoryLabel: "Charges & Fees",
+                                  itemCode: charge.chargeCode
+                                })}
+                              >
+                                <History className="h-4 w-4 mr-2" />
+                                History
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -402,10 +473,23 @@ const ProductDetails = () => {
                       Configure validation rules, eligibility criteria, and constraints
                     </CardDescription>
                   </div>
-                  <Button onClick={handleAddRule}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Rule
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setAuditTrailDialog({
+                        open: true,
+                        category: "rules",
+                        categoryLabel: "Business Rules"
+                      })}
+                    >
+                      <History className="h-4 w-4 mr-2" />
+                      View Audit Trail
+                    </Button>
+                    <Button onClick={handleAddRule}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Rule
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -436,14 +520,29 @@ const ProductDetails = () => {
                           <TableCell>{rule.validationType}</TableCell>
                           <TableCell className="max-w-xs truncate">{rule.ruleValue}</TableCell>
                           <TableCell>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => handleEditRule(rule)}
-                            >
-                              <Pencil className="h-4 w-4 mr-2" />
-                              Edit
-                            </Button>
+                            <div className="flex gap-2">
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleEditRule(rule)}
+                              >
+                                <Pencil className="h-4 w-4 mr-2" />
+                                Edit
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => setAuditTrailDialog({
+                                  open: true,
+                                  category: "rules",
+                                  categoryLabel: "Business Rules",
+                                  itemCode: rule.ruleCode
+                                })}
+                              >
+                                <History className="h-4 w-4 mr-2" />
+                                History
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -465,10 +564,23 @@ const ProductDetails = () => {
                       Configure allowed transaction types, limits, and channel availability
                     </CardDescription>
                   </div>
-                  <Button onClick={handleAddTransaction}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Transaction Type
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setAuditTrailDialog({
+                        open: true,
+                        category: "transactions",
+                        categoryLabel: "Transaction Types"
+                      })}
+                    >
+                      <History className="h-4 w-4 mr-2" />
+                      View Audit Trail
+                    </Button>
+                    <Button onClick={handleAddTransaction}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Transaction Type
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -497,14 +609,29 @@ const ProductDetails = () => {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => handleEditTransaction(txn)}
-                            >
-                              <Pencil className="h-4 w-4 mr-2" />
-                              Edit
-                            </Button>
+                            <div className="flex gap-2">
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleEditTransaction(txn)}
+                              >
+                                <Pencil className="h-4 w-4 mr-2" />
+                                Edit
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => setAuditTrailDialog({
+                                  open: true,
+                                  category: "transactions",
+                                  categoryLabel: "Transaction Types",
+                                  itemCode: txn.transactionCode
+                                })}
+                              >
+                                <History className="h-4 w-4 mr-2" />
+                                History
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -523,13 +650,26 @@ const ProductDetails = () => {
                   <div>
                     <CardTitle>Communication Templates</CardTitle>
                     <CardDescription>
-                      Manage customer notifications and automated messages
+                      Manage customer notifications and automated communications
                     </CardDescription>
                   </div>
-                  <Button onClick={handleAddCommunication}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Template
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setAuditTrailDialog({
+                        open: true,
+                        category: "communications",
+                        categoryLabel: "Communication Templates"
+                      })}
+                    >
+                      <History className="h-4 w-4 mr-2" />
+                      View Audit Trail
+                    </Button>
+                    <Button onClick={handleAddCommunication}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Template
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -560,14 +700,29 @@ const ProductDetails = () => {
                           <TableCell className="max-w-xs truncate">{comm.template || '-'}</TableCell>
                           <TableCell>{comm.frequencyLimit || '-'}</TableCell>
                           <TableCell>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => handleEditCommunication(comm)}
-                            >
-                              <Pencil className="h-4 w-4 mr-2" />
-                              Edit
-                            </Button>
+                            <div className="flex gap-2">
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleEditCommunication(comm)}
+                              >
+                                <Pencil className="h-4 w-4 mr-2" />
+                                Edit
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => setAuditTrailDialog({
+                                  open: true,
+                                  category: "communications",
+                                  categoryLabel: "Communication Templates",
+                                  itemCode: comm.communicationCode || comm.commCode
+                                })}
+                              >
+                                <History className="h-4 w-4 mr-2" />
+                                History
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -584,15 +739,28 @@ const ProductDetails = () => {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle>Roles & Permissions</CardTitle>
+                    <CardTitle>Role Permissions</CardTitle>
                     <CardDescription>
-                      Configure which user roles can access this product
+                      Define which roles can access and interact with this product
                     </CardDescription>
                   </div>
-                  <Button onClick={handleAddRole}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Role
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setAuditTrailDialog({
+                        open: true,
+                        category: "roles",
+                        categoryLabel: "Role Permissions"
+                      })}
+                    >
+                      <History className="h-4 w-4 mr-2" />
+                      View Audit Trail
+                    </Button>
+                    <Button onClick={handleAddRole}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Role
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -625,14 +793,29 @@ const ProductDetails = () => {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => handleEditRole(role)}
-                            >
-                              <Pencil className="h-4 w-4 mr-2" />
-                              Edit
-                            </Button>
+                            <div className="flex gap-2">
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleEditRole(role)}
+                              >
+                                <Pencil className="h-4 w-4 mr-2" />
+                                Edit
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => setAuditTrailDialog({
+                                  open: true,
+                                  category: "roles",
+                                  categoryLabel: "Product Roles",
+                                  itemCode: role.roleCode
+                                })}
+                              >
+                                <History className="h-4 w-4 mr-2" />
+                                History
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -654,10 +837,23 @@ const ProductDetails = () => {
                       Configure which balance types are applicable for this product
                     </CardDescription>
                   </div>
-                  <Button onClick={handleAddBalance}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Balance Type
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setAuditTrailDialog({
+                        open: true,
+                        category: "balances",
+                        categoryLabel: "Balance Types"
+                      })}
+                    >
+                      <History className="h-4 w-4 mr-2" />
+                      View Audit Trail
+                    </Button>
+                    <Button onClick={handleAddBalance}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Balance Type
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -690,14 +886,29 @@ const ProductDetails = () => {
                               : '-'}
                           </TableCell>
                           <TableCell>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => handleEditBalance(balance)}
-                            >
-                              <Pencil className="h-4 w-4 mr-2" />
-                              Edit
-                            </Button>
+                            <div className="flex gap-2">
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleEditBalance(balance)}
+                              >
+                                <Pencil className="h-4 w-4 mr-2" />
+                                Edit
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => setAuditTrailDialog({
+                                  open: true,
+                                  category: "balances",
+                                  categoryLabel: "Balance Types",
+                                  itemCode: balance.balanceType
+                                })}
+                              >
+                                <History className="h-4 w-4 mr-2" />
+                                History
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -766,6 +977,18 @@ const ProductDetails = () => {
         balance={balanceDialog.data}
         onSave={fetchAllData}
       />
+
+      {/* Audit Trail Dialog */}
+      {auditTrailDialog.category && (
+        <AuditTrailDialog
+          open={auditTrailDialog.open}
+          onOpenChange={(open) => setAuditTrailDialog({ ...auditTrailDialog, open })}
+          productCode={productCode!}
+          category={auditTrailDialog.category}
+          categoryLabel={auditTrailDialog.categoryLabel}
+          itemCode={auditTrailDialog.itemCode}
+        />
+      )}
     </div>
   );
 };

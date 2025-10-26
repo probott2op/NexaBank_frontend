@@ -29,8 +29,21 @@ const Index = () => {
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
-              <Button size="lg" variant="outline" className="gap-2 border-white/30 bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm">
-                Learn More
+              <Button 
+                size="lg" 
+                variant="outline" 
+                className="gap-2 border-white/30 bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm"
+                onClick={() => document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' })}
+              >
+                View Products
+              </Button>
+              <Button 
+                size="lg" 
+                variant="outline" 
+                className="gap-2 border-white/30 bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm"
+                onClick={() => document.getElementById('calculator')?.scrollIntoView({ behavior: 'smooth' })}
+              >
+                Calculate Returns
               </Button>
             </div>
           </div>
@@ -85,7 +98,7 @@ const Index = () => {
       </section>
 
       {/* Products Section */}
-      <section className="py-20 bg-muted/30">
+      <section id="products" className="py-20 bg-muted/30">
         <div className="container px-4">
           <div className="mx-auto max-w-7xl">
             <div className="mb-10 text-center">
@@ -102,7 +115,7 @@ const Index = () => {
       </section>
 
       {/* FD Calculator Section */}
-      <section className="py-20">
+      <section id="calculator" className="py-20">
         <div className="container px-4">
           <div className="mx-auto max-w-4xl">
             <div className="mb-10 text-center">

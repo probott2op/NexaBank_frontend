@@ -25,27 +25,40 @@ export const FDCalculator = () => {
   const [principal, setPrincipal] = useState("");
   const [tenure, setTenure] = useState("");
   const [tenureUnit, setTenureUnit] = useState("YEARS");
-  const [category, setCategory] = useState("");
-  const [categories, setCategories] = useState<any[]>([]);
-  const [compoundingFreq, setCompoundingFreq] = useState("QUARTERLY");
+  const [category1, setCategory1] = useState("");
+  const [category2, setCategory2] = useState("");
+  const [productCode, setProductCode] = useState("FD001");
+  const [products, setProducts] = useState<any[]>([]);
   const [isCumulative, setIsCumulative] = useState(true);
-  const [payoutFreq, setPayoutFreq] = useState("MONTHLY");
+  const [payoutFreq, setPayoutFreq] = useState("YEARLY");
   const [isCalculating, setIsCalculating] = useState(false);
   const [isCreatingAccount, setIsCreatingAccount] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [calculationResult, setCalculationResult] = useState<any>(null);
 
-  // Fetch categories on mount
+  // Available categories based on backend mapping
+  const availableCategories = [
+    { code: "SR", name: "Senior Citizen", variants: ["SENIOR", "SENIOR_CITIZEN", "SR"] },
+    { code: "JR", name: "Junior", variants: ["JUNIOR", "JR"] },
+    { code: "DY", name: "Digi Youth", variants: ["DIGI_YOUTH", "DY"] },
+    { code: "GOLD", name: "Gold", variants: ["GOLD"] },
+    { code: "SIL", name: "Silver", variants: ["SILVER", "SIL"] },
+    { code: "PLAT", name: "Platinum", variants: ["PLATINUM", "PLAT"] },
+    { code: "EMP", name: "Employee", variants: ["EMPLOYEE", "EMP"] },
+  ];
+
+  // Fetch products on mount
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchProducts = async () => {
       try {
-        const data = await fdCalcAPI.getCategories();
-        setCategories(data || []);
+        const { productAPI } = await import("@/services/api");
+        const response = await productAPI.getProducts();
+        setProducts(response.data || []);
       } catch (error) {
-        console.error("Failed to fetch categories:", error);
+        console.error("Failed to fetch products:", error);
       }
     };
-    fetchCategories();
+    fetchProducts();
   }, []);
 
   const calculateFD = async () => {
@@ -61,19 +74,33 @@ export const FDCalculator = () => {
     setIsCalculating(true);
     
     try {
-      // Call FD Calculation API
-      const response = await fdCalcAPI.calculate({
+      // Build request payload based on API spec
+      const payload: any = {
         principal_amount: parseFloat(principal),
         tenure_value: parseInt(tenure),
         tenure_unit: tenureUnit,
-        interest_type: "COMPOUND",
-        compounding_frequency: compoundingFreq,
-        category1_id: category || undefined,
+        currency_code: "INR",
         cumulative: isCumulative,
-        payout_freq: isCumulative ? undefined : payoutFreq,
-        product_code: "FD001",
-        currency_code: "INR"
-      });
+        product_code: productCode,
+      };
+
+      // Add category1_id if selected
+      if (category1) {
+        payload.category1_id = category1;
+      }
+
+      // Add category2_id if selected
+      if (category2) {
+        payload.category2_id = category2;
+      }
+
+      // Add payout_freq for non-cumulative FD
+      if (!isCumulative) {
+        payload.payout_freq = payoutFreq;
+      }
+
+      // Call FD Calculation API
+      const response = await fdCalcAPI.calculate(payload);
 
       setCalculationResult(response);
 
@@ -121,7 +148,7 @@ export const FDCalculator = () => {
       // Create FD account
       const accountData = await fdAccountAPI.createAccount({
         calculationId: calculationResult.result_id,
-        productCode: "FD001",
+        productCode: productCode,
         maturityInstruction: "PAYOUT"
       });
 
@@ -177,15 +204,15 @@ export const FDCalculator = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="category">Customer Category (Optional)</Label>
-              <Select value={category} onValueChange={setCategory} disabled={isCalculating}>
-                <SelectTrigger id="category">
-                  <SelectValue placeholder="Select category" />
+              <Label htmlFor="productCode">Product</Label>
+              <Select value={productCode} onValueChange={setProductCode} disabled={isCalculating}>
+                <SelectTrigger id="productCode">
+                  <SelectValue placeholder="Select product" />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat.category_code} value={cat.category_code}>
-                      {cat.category_name} (+{cat.additional_percentage}%)
+                  {products.map((product) => (
+                    <SelectItem key={product.productCode} value={product.productCode}>
+                      {product.productName}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -219,16 +246,35 @@ export const FDCalculator = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="compounding">Compounding Frequency</Label>
-              <Select value={compoundingFreq} onValueChange={setCompoundingFreq} disabled={isCalculating}>
-                <SelectTrigger id="compounding">
-                  <SelectValue />
+              <Label htmlFor="category1">Category 1 (Optional)</Label>
+              <Select value={category1} onValueChange={setCategory1} disabled={isCalculating}>
+                <SelectTrigger id="category1">
+                  <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="DAILY">Daily</SelectItem>
-                  <SelectItem value="MONTHLY">Monthly</SelectItem>
-                  <SelectItem value="QUARTERLY">Quarterly</SelectItem>
-                  <SelectItem value="YEARLY">Yearly</SelectItem>
+                  <SelectItem value="">None</SelectItem>
+                  {availableCategories.map((cat) => (
+                    <SelectItem key={cat.code} value={cat.code}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="category2">Category 2 (Optional)</Label>
+              <Select value={category2} onValueChange={setCategory2} disabled={isCalculating}>
+                <SelectTrigger id="category2">
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">None</SelectItem>
+                  {availableCategories.map((cat) => (
+                    <SelectItem key={cat.code} value={cat.code}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -247,7 +293,7 @@ export const FDCalculator = () => {
             </div>
 
             {!isCumulative && (
-              <div className="space-y-2 md:col-span-2">
+              <div className="space-y-2">
                 <Label htmlFor="payout">Payout Frequency</Label>
                 <Select value={payoutFreq} onValueChange={setPayoutFreq} disabled={isCalculating}>
                   <SelectTrigger id="payout">

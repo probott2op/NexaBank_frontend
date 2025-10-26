@@ -1,4 +1,5 @@
 import { FDCalculator } from "@/components/FDCalculator";
+import { ProductsShowcase } from "@/components/ProductsShowcase";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ArrowRight, Shield, TrendingUp, Users, Zap } from "lucide-react";
@@ -79,6 +80,23 @@ const Index = () => {
                 Dedicated customer service team
               </p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Products Section */}
+      <section className="py-20 bg-muted/30">
+        <div className="container px-4">
+          <div className="mx-auto max-w-7xl">
+            <div className="mb-10 text-center">
+              <h2 className="mb-4 text-4xl font-bold">
+                Our Fixed Deposit Products
+              </h2>
+              <p className="text-lg text-muted-foreground">
+                Explore our FD products with their rates, charges, and benefits
+              </p>
+            </div>
+            <ProductsShowcase />
           </div>
         </div>
       </section>

@@ -15,13 +15,17 @@ export const ProductsShowcase = () => {
       try {
         const { productAPI } = await import("@/services/api");
         const response = await productAPI.getAllProducts();
-        const productsData = response.data || [];
-        setProducts(productsData);
+        console.log("ProductsShowcase API response:", response);
+        // The API returns { data: [...], totalPages, totalElements, etc }
+        const productsData = response?.data || response || [];
+        console.log("ProductsShowcase products data:", productsData);
+        setProducts(Array.isArray(productsData) ? productsData : []);
         
         // Fetch details for each product
         if (productsData.length > 0) {
           const firstProduct = productsData[0];
           const details = await productAPI.getProductByCode(firstProduct.productCode);
+          console.log("First product details:", details);
           setSelectedProduct(details);
         }
       } catch (error) {

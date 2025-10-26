@@ -52,10 +52,19 @@ export const FDCalculator = () => {
     const fetchProducts = async () => {
       try {
         const { productAPI } = await import("@/services/api");
-        const response = await productAPI.getProducts();
-        setProducts(response.data || []);
+        const response = await productAPI.getAllProducts();
+        console.log("Products API response:", response);
+        // The API returns { data: [...], totalPages, totalElements, etc }
+        const productsData = response?.data || response || [];
+        console.log("Products data:", productsData);
+        setProducts(Array.isArray(productsData) ? productsData : []);
       } catch (error) {
         console.error("Failed to fetch products:", error);
+        toast({
+          title: "Failed to load products",
+          description: "Could not fetch product list. Please refresh the page.",
+          variant: "destructive",
+        });
       }
     };
     fetchProducts();
@@ -247,12 +256,11 @@ export const FDCalculator = () => {
 
             <div className="space-y-2">
               <Label htmlFor="category1">Category 1 (Optional)</Label>
-              <Select value={category1} onValueChange={setCategory1} disabled={isCalculating}>
+              <Select value={category1 || undefined} onValueChange={setCategory1} disabled={isCalculating}>
                 <SelectTrigger id="category1">
-                  <SelectValue placeholder="Select category" />
+                  <SelectValue placeholder="None - Select category" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None</SelectItem>
                   {availableCategories.map((cat) => (
                     <SelectItem key={cat.code} value={cat.code}>
                       {cat.name}
@@ -264,12 +272,11 @@ export const FDCalculator = () => {
 
             <div className="space-y-2">
               <Label htmlFor="category2">Category 2 (Optional)</Label>
-              <Select value={category2} onValueChange={setCategory2} disabled={isCalculating}>
+              <Select value={category2 || undefined} onValueChange={setCategory2} disabled={isCalculating}>
                 <SelectTrigger id="category2">
-                  <SelectValue placeholder="Select category" />
+                  <SelectValue placeholder="None - Select category" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None</SelectItem>
                   {availableCategories.map((cat) => (
                     <SelectItem key={cat.code} value={cat.code}>
                       {cat.name}

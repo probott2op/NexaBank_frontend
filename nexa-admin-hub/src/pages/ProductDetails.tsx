@@ -17,7 +17,8 @@ import {
   Users,
   Plus,
   Pencil,
-  History
+  History,
+  Trash2
 } from "lucide-react";
 import {
   Table,
@@ -35,6 +36,7 @@ import { CommunicationDialog } from "@/components/admin/CommunicationDialog";
 import { RoleDialog } from "@/components/admin/RoleDialog";
 import { BalanceDialog } from "@/components/admin/BalanceDialog";
 import { AuditTrailDialog } from "@/components/admin/AuditTrailDialog";
+import { DeleteDialog } from "@/components/admin/DeleteDialog";
 
 const ProductDetails = () => {
   const { productCode } = useParams<{ productCode: string }>();
@@ -71,6 +73,19 @@ const ProductDetails = () => {
     category: null,
     categoryLabel: "",
     itemCode: undefined,
+  });
+
+  // Delete Dialog state
+  const [deleteDialog, setDeleteDialog] = useState<{
+    open: boolean;
+    type: "interest-rate" | "charge" | "balance" | "rule" | "transaction" | "communication" | "role" | null;
+    itemId: string | null;
+    itemName: string;
+  }>({
+    open: false,
+    type: null,
+    itemId: null,
+    itemName: "",
   });
 
   useEffect(() => {
@@ -179,6 +194,120 @@ const ProductDetails = () => {
 
   const handleEditBalance = (balance: any) => {
     setBalanceDialog({ open: true, data: balance });
+  };
+
+  // Delete handlers
+  const handleDeleteInterestRate = (rate: any) => {
+    setDeleteDialog({
+      open: true,
+      type: "interest-rate",
+      itemId: rate.rateCode,
+      itemName: `${rate.termInMonths} months rate (${rate.rateCode})`,
+    });
+  };
+
+  const handleDeleteCharge = (charge: any) => {
+    setDeleteDialog({
+      open: true,
+      type: "charge",
+      itemId: charge.chargeCode,
+      itemName: `${charge.chargeType} - ${charge.chargeCode}`,
+    });
+  };
+
+  const handleDeleteRule = (rule: any) => {
+    setDeleteDialog({
+      open: true,
+      type: "rule",
+      itemId: rule.ruleCode,
+      itemName: `${rule.ruleName} (${rule.ruleCode})`,
+    });
+  };
+
+  const handleDeleteTransaction = (transaction: any) => {
+    setDeleteDialog({
+      open: true,
+      type: "transaction",
+      itemId: transaction.transactionCode,
+      itemName: `${transaction.transactionType} (${transaction.transactionCode})`,
+    });
+  };
+
+  const handleDeleteCommunication = (comm: any) => {
+    setDeleteDialog({
+      open: true,
+      type: "communication",
+      itemId: comm.communicationCode || comm.commCode,
+      itemName: `${comm.communicationType} - ${comm.communicationCode || comm.commCode}`,
+    });
+  };
+
+  const handleDeleteRole = (role: any) => {
+    setDeleteDialog({
+      open: true,
+      type: "role",
+      itemId: role.roleCode,
+      itemName: `${role.roleName} (${role.roleCode})`,
+    });
+  };
+
+  const handleDeleteBalance = (balance: any) => {
+    setDeleteDialog({
+      open: true,
+      type: "balance",
+      itemId: balance.balanceType,
+      itemName: balance.balanceType,
+    });
+  };
+
+  // Confirm delete handler
+  const handleConfirmDelete = async () => {
+    if (!deleteDialog.itemId || !deleteDialog.type) return;
+
+    try {
+      switch (deleteDialog.type) {
+        case "interest-rate":
+          await productAPI.deleteInterestRate(productCode!, deleteDialog.itemId);
+          toast({ title: "Interest rate deleted successfully" });
+          break;
+        case "charge":
+          await productAPI.deleteCharge(productCode!, deleteDialog.itemId);
+          toast({ title: "Charge deleted successfully" });
+          break;
+        case "rule":
+          await productAPI.deleteRule(productCode!, deleteDialog.itemId);
+          toast({ title: "Rule deleted successfully" });
+          break;
+        case "transaction":
+          await productAPI.deleteTransaction(productCode!, deleteDialog.itemId);
+          toast({ title: "Transaction type deleted successfully" });
+          break;
+        case "communication":
+          await productAPI.deleteCommunication(productCode!, deleteDialog.itemId);
+          toast({ title: "Communication template deleted successfully" });
+          break;
+        case "role":
+          await productAPI.deleteRole(productCode!, deleteDialog.itemId);
+          toast({ title: "Role deleted successfully" });
+          break;
+        case "balance":
+          await productAPI.deleteBalance(productCode!, deleteDialog.itemId);
+          toast({ title: "Balance type deleted successfully" });
+          break;
+      }
+
+      // Refresh data
+      await fetchAllData();
+      
+      // Close dialog
+      setDeleteDialog({ open: false, type: null, itemId: null, itemName: "" });
+    } catch (error: any) {
+      toast({
+        title: "Delete failed",
+        description: error.message || "Failed to delete item",
+        variant: "destructive",
+      });
+    }
   };
 
   if (loading) {
@@ -350,6 +479,14 @@ const ProductDetails = () => {
                                 <History className="h-4 w-4 mr-2" />
                                 History
                               </Button>
+                              <Button 
+                                variant="destructive" 
+                                size="sm"
+                                onClick={() => handleDeleteInterestRate(rate)}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete
+                              </Button>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -451,6 +588,14 @@ const ProductDetails = () => {
                                 <History className="h-4 w-4 mr-2" />
                                 History
                               </Button>
+                              <Button 
+                                variant="destructive" 
+                                size="sm"
+                                onClick={() => handleDeleteCharge(charge)}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete
+                              </Button>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -542,6 +687,14 @@ const ProductDetails = () => {
                                 <History className="h-4 w-4 mr-2" />
                                 History
                               </Button>
+                              <Button 
+                                variant="destructive" 
+                                size="sm"
+                                onClick={() => handleDeleteRule(rule)}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete
+                              </Button>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -630,6 +783,14 @@ const ProductDetails = () => {
                               >
                                 <History className="h-4 w-4 mr-2" />
                                 History
+                              </Button>
+                              <Button 
+                                variant="destructive" 
+                                size="sm"
+                                onClick={() => handleDeleteTransaction(txn)}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete
                               </Button>
                             </div>
                           </TableCell>
@@ -721,6 +882,14 @@ const ProductDetails = () => {
                               >
                                 <History className="h-4 w-4 mr-2" />
                                 History
+                              </Button>
+                              <Button 
+                                variant="destructive" 
+                                size="sm"
+                                onClick={() => handleDeleteCommunication(comm)}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete
                               </Button>
                             </div>
                           </TableCell>
@@ -815,6 +984,14 @@ const ProductDetails = () => {
                                 <History className="h-4 w-4 mr-2" />
                                 History
                               </Button>
+                              <Button 
+                                variant="destructive" 
+                                size="sm"
+                                onClick={() => handleDeleteRole(role)}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete
+                              </Button>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -908,6 +1085,14 @@ const ProductDetails = () => {
                                 <History className="h-4 w-4 mr-2" />
                                 History
                               </Button>
+                              <Button 
+                                variant="destructive" 
+                                size="sm"
+                                onClick={() => handleDeleteBalance(balance)}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete
+                              </Button>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -989,6 +1174,15 @@ const ProductDetails = () => {
           itemCode={auditTrailDialog.itemCode}
         />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteDialog
+        open={deleteDialog.open}
+        onOpenChange={(open) => setDeleteDialog({ ...deleteDialog, open })}
+        title={`Delete ${deleteDialog.itemName}?`}
+        description={`Are you sure you want to delete this ${deleteDialog.type?.replace('-', ' ')}? This action cannot be undone.`}
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   );
 };

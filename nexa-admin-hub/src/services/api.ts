@@ -285,14 +285,14 @@ export const productAPI = {
       body: JSON.stringify(data),
     }),
   
-  updateInterestRate: (productCode: string, interestId: string, data: any) =>
-    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/interest-rates/${interestId}`, {
+  updateInterestRate: (productCode: string, rateCode: string, data: any) =>
+    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/interest-rates/${rateCode}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     }),
   
-  deleteInterestRate: (productCode: string, interestId: string) =>
-    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/interest-rates/${interestId}`, {
+  deleteInterestRate: (productCode: string, rateCode: string) =>
+    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/interest-rates/${rateCode}`, {
       method: 'DELETE',
     }),
 
@@ -308,14 +308,14 @@ export const productAPI = {
       body: JSON.stringify(data),
     }),
   
-  updateCharge: (productCode: string, chargeId: string, data: any) =>
-    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/charges/${chargeId}`, {
+  updateCharge: (productCode: string, chargeCode: string, data: any) =>
+    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/charges/${chargeCode}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     }),
   
-  deleteCharge: (productCode: string, chargeId: string) =>
-    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/charges/${chargeId}`, {
+  deleteCharge: (productCode: string, chargeCode: string) =>
+    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/charges/${chargeCode}`, {
       method: 'DELETE',
     }),
 
@@ -354,14 +354,14 @@ export const productAPI = {
       body: JSON.stringify(data),
     }),
   
-  updateRule: (productCode: string, ruleId: string, data: any) =>
-    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/rules/${ruleId}`, {
+  updateRule: (productCode: string, ruleCode: string, data: any) =>
+    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/rules/${ruleCode}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     }),
   
-  deleteRule: (productCode: string, ruleId: string) =>
-    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/rules/${ruleId}`, {
+  deleteRule: (productCode: string, ruleCode: string) =>
+    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/rules/${ruleCode}`, {
       method: 'DELETE',
     }),
 
@@ -400,14 +400,14 @@ export const productAPI = {
       body: JSON.stringify(data),
     }),
   
-  updateCommunication: (productCode: string, commId: string, data: any) =>
-    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/communications/${commId}`, {
+  updateCommunication: (productCode: string, commCode: string, data: any) =>
+    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/communications/${commCode}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     }),
   
-  deleteCommunication: (productCode: string, commId: string) =>
-    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/communications/${commId}`, {
+  deleteCommunication: (productCode: string, commCode: string) =>
+    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/communications/${commCode}`, {
       method: 'DELETE',
     }),
 
@@ -423,14 +423,14 @@ export const productAPI = {
       body: JSON.stringify(data),
     }),
   
-  updateRole: (productCode: string, roleId: string, data: any) =>
-    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/roles/${roleId}`, {
+  updateRole: (productCode: string, roleCode: string, data: any) =>
+    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/roles/${roleCode}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     }),
   
-  deleteRole: (productCode: string, roleId: string) =>
-    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/roles/${roleId}`, {
+  deleteRole: (productCode: string, roleCode: string) =>
+    apiFetch(`${API_URLS.PRODUCT}/api/products/${productCode}/roles/${roleCode}`, {
       method: 'DELETE',
     }),
 
@@ -521,10 +521,11 @@ export const fdAccountAPI = {
     }),
   
   // Search accounts
-  searchAccounts: (params: { accountNumber?: string; customerId?: string; productCode?: string }) => {
+  searchAccounts: (params: { accountNumber?: string; idType?: string; value?: string; productCode?: string }) => {
     const queryParams = new URLSearchParams();
     if (params.accountNumber) queryParams.append('accountNumber', params.accountNumber);
-    if (params.customerId) queryParams.append('customerId', params.customerId);
+    if (params.idType) queryParams.append('idType', params.idType);
+    if (params.value) queryParams.append('value', params.value);
     if (params.productCode) queryParams.append('productCode', params.productCode);
     return apiFetch(`${API_URLS.FD_ACCOUNT}/api/v1/accounts/search?${queryParams}`);
   },
@@ -532,6 +533,10 @@ export const fdAccountAPI = {
   // Get account transactions
   getAccountTransactions: (accountNumber: string) => 
     apiFetch(`${API_URLS.FD_ACCOUNT}/api/v1/accounts/${accountNumber}/transactions`),
+  
+  // Get account balances
+  getAccountBalances: (accountNumber: string) => 
+    apiFetch(`${API_URLS.FD_ACCOUNT}/api/v1/accounts/${accountNumber}/balances`),
   
   // Add account holder/role
   addAccountHolder: (accountNumber: string, data: any) => 

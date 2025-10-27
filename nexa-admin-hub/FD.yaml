@@ -180,7 +180,7 @@ info:
     url: https://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
 servers:
-  - url: http://localhost:8080
+  - url: http://localhost:9090
     description: Local Development Server
   - url: https://api-uat.nexusbank.com
     description: User Acceptance Testing Environment
@@ -201,15 +201,16 @@ tags:
       - **Search & Retrieval**: Find accounts by multiple criteria
 
       ## Account Creation Process
-      1. User obtains JWT token from Authentication Service (contains customer ID in 'sub' claim)
+      1. User obtains JWT token from Authentication Service (contains customer email in 'sub' claim)
       2. User creates FD calculation via Calculation Service (returns calcId)
       3. User calls POST /api/v1/accounts with JWT token and calcId
-      4. System extracts customer ID from JWT token automatically
-      5. System fetches calculation details (maturity date, interest rate, product code)
-      6. System fetches product configuration (balances, roles, communications)
-      7. System creates account with all balance types (FD_PRINCIPAL, FD_INTEREST, PENALTY)
-      8. System publishes events to Kafka (account creation, communications)
-      9. System returns created account details
+      4. System extracts customer email from JWT token automatically
+      5. System calls Customer Service to get customer profile and customerNumber
+      6. System fetches calculation details (maturity date, interest rate, product code)
+      7. System fetches product configuration (balances, roles, communications)
+      8. System creates account with all balance types (FD_PRINCIPAL, FD_INTEREST, PENALTY)
+      9. System publishes events to Kafka (account creation, communications)
+      10. System returns created account details
 
       ## Role Management
       Products define which roles are allowed. Common roles:
@@ -233,7 +234,7 @@ tags:
 
       ## Authentication
       All endpoints require JWT Bearer token in Authorization header.
-      Customer ID is automatically extracted from token's 'sub' claim.
+      Customer email is automatically extracted from token's 'sub' claim and used to fetch customer profile.
   - name: Authentication
     description: Authentication verification and user info endpoints
   - name: FD Reports
@@ -290,34 +291,37 @@ paths:
         Create a new Fixed Deposit account with comprehensive configuration from external services.
 
         **What This Endpoint Does:**
-        1. Extracts customer ID from JWT token's 'sub' claim (automatic, no manual input needed)
-        2. Fetches calculation details from FD Calculation Service using calcId
-        3. Fetches product configuration from Product & Pricing Service
-        4. Creates FD account with calculated maturity values
-        5. Creates balance types based on product configuration (FD_PRINCIPAL, FD_INTEREST, PENALTY)
-        6. Publishes account creation event to Kafka
-        7. Sends communication events (Email/SMS) based on product templates
-        8. Returns complete account details
+        1. Extracts customer email from JWT token's 'sub' claim (automatic, no manual input needed)
+        2. Calls Customer Service to get customer profile and customerNumber
+        3. Fetches calculation details from FD Calculation Service using calcId
+        4. Fetches product configuration from Product & Pricing Service
+        5. Creates FD account with calculated maturity values
+        6. Creates balance types based on product configuration (FD_PRINCIPAL, FD_INTEREST, PENALTY)
+        7. Publishes account creation event to Kafka
+        8. Sends communication events (Email/SMS) based on product templates
+        9. Returns complete account details
 
         **Request Body:**
         - `accountName`: Display name for the account (e.g., "My Retirement Fund")
         - `calcId`: Calculation ID from FD Calculation Service (obtained from /api/fd/calculations)
 
         **JWT Token Requirements:**
-        - Must contain 'sub' claim with customer ID
+        - Must contain 'sub' claim with customer email
         - Must be valid and not expired
         - Obtained from Authentication Service at http://localhost:3020
 
         **External Service Calls:**
         This endpoint integrates with:
-        1. **FD Calculation Service** (http://localhost:4030)
+        1. **Customer Service** (http://localhost:1005)
+           - Fetches: customer profile, customerNumber (business identifier)
+        2. **FD Calculation Service** (http://localhost:4030)
            - Fetches: maturity value, maturity date, interest rates, product code
-        2. **Product & Pricing Service** (http://localhost:8080)
+        3. **Product & Pricing Service** (http://localhost:8080)
            - Fetches: balance types, allowed roles, transaction types, communication templates, penalty charges
 
         **What Gets Created:**
         - FD Account entity with all details
-        - Account holder entry (OWNER role) using customer ID from JWT
+        - Account holder entry (OWNER role) using customerNumber from Customer Service
         - Initial deposit transaction (PRINCIPAL_DEPOSIT)
         - Multiple balance entries:
           * FD_PRINCIPAL: Set to principal amount
@@ -759,6 +763,50 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/FDTransactionView'
+  /api/v1/accounts/{accountNumber}/balances:
+    get:
+      tags:
+        - FD Account Management
+      summary: Get account balances
+      description: Retrieve all balance types (FD_PRINCIPAL, FD_INTEREST, PENALTY) for an FD account
+      operationId: getAccountBalances
+      parameters:
+        - name: accountNumber
+          in: path
+          description: FD Account number
+          required: true
+          schema:
+            type: string
+          example: FD202401150001
+      responses:
+        '200':
+          description: Balances retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FdAccountBalanceView'
+              examples:
+                Account Balances:
+                  description: Account Balances
+                  value:
+                    - balanceType: FD_PRINCIPAL
+                      balanceAmount: 100000
+                      isActive: true
+                      createdAt: '2024-01-15T10:30:00'
+                      updatedAt: '2024-01-15T10:30:00'
+                    - balanceType: FD_INTEREST
+                      balanceAmount: 5250
+                      isActive: true
+                      createdAt: '2024-01-15T10:30:00'
+                      updatedAt: '2024-03-15T00:00:00'
+        '404':
+          description: Account not found
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FdAccountBalanceView'
   /api/v1/accounts/search:
     get:
       tags:
@@ -996,6 +1044,43 @@ components:
           description: Expected maturity date
           format: date
           example: '2026-01-15'
+        interestRate:
+          type: number
+          description: Interest rate percentage
+          example: 7.5
+        apy:
+          type: number
+          description: Annual Percentage Yield
+          example: 7.76
+        category1Id:
+          type: string
+          description: Customer category 1 (e.g., SENIOR, JUNIOR)
+          example: JR
+        category2Id:
+          type: string
+          description: Customer category 2 (e.g., GOLD, PLATINUM)
+          example: DY
+        interestType:
+          type: string
+          description: Interest type (SIMPLE or COMPOUND)
+          example: COMPOUND
+        compoundingFrequency:
+          type: string
+          description: Compounding frequency (MONTHLY, QUARTERLY, YEARLY)
+          example: QUARTERLY
+        tenureValue:
+          type: integer
+          description: Tenure value
+          format: int32
+          example: 5
+        tenureUnit:
+          type: string
+          description: Tenure unit (YEARS, MONTHS, DAYS)
+          example: YEARS
+        currency:
+          type: string
+          description: Currency code
+          example: INR
         accountHolders:
           type: array
           description: List of account holders and their roles
@@ -1063,6 +1148,30 @@ components:
           type: string
         transactionReference:
           type: string
+    FdAccountBalanceView:
+      type: object
+      properties:
+        balanceType:
+          type: string
+          description: Balance type (FD_PRINCIPAL, FD_INTEREST, PENALTY)
+          example: FD_PRINCIPAL
+        balanceAmount:
+          type: number
+          description: Current balance amount
+          example: 100000
+        isActive:
+          type: boolean
+          description: Whether this balance type is active
+          example: true
+        createdAt:
+          type: string
+          description: When this balance entry was created
+          format: date-time
+        updatedAt:
+          type: string
+          description: When this balance was last updated
+          format: date-time
+      description: FD Account balance details for different balance types
   securitySchemes:
     Bearer Authentication:
       type: http

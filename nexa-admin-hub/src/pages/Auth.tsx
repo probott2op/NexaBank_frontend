@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +18,7 @@ interface AuthProps {
 const Auth = ({ onLogin }: AuthProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [loginData, setLoginData] = useState({ email: "", password: "" });
   const [signupData, setSignupData] = useState({
     email: "",
@@ -53,8 +55,8 @@ const Auth = ({ onLogin }: AuthProps) => {
     
     if (!loginData.email || !loginData.password) {
       toast({
-        title: "Missing Information",
-        description: "Please fill in all fields",
+        title: t('auth.missingInformation'),
+        description: t('auth.fillAllFields'),
         variant: "destructive",
       });
       return;
@@ -91,8 +93,8 @@ const Auth = ({ onLogin }: AuthProps) => {
       const role = userInfo.userType === "ADMIN" ? "admin" : "user";
       
       toast({
-        title: "Login Successful",
-        description: `Welcome back${role === "admin" ? ", Admin" : ""}!`,
+        title: t('auth.loginSuccessful'),
+        description: role === "admin" ? t('auth.welcomeBackAdmin') : t('auth.welcomeBack'),
       });
       
       onLogin(role);
@@ -113,15 +115,15 @@ const Auth = ({ onLogin }: AuthProps) => {
         }
         
         toast({
-          title: "Account Locked",
+          title: t('auth.accountLocked'),
           description,
           variant: "destructive",
           duration: 10000, // Show for 10 seconds
         });
       } else {
         toast({
-          title: "Login Failed",
-          description: error.message || "Invalid credentials. Please try again.",
+          title: t('auth.loginFailed'),
+          description: error.message || t('auth.invalidCredentialsMsg'),
           variant: "destructive",
         });
       }
@@ -135,8 +137,8 @@ const Auth = ({ onLogin }: AuthProps) => {
     
     if (signupData.password !== signupData.confirmPassword) {
       toast({
-        title: "Passwords Don't Match",
-        description: "Please make sure your passwords match",
+        title: t('auth.passwordsDontMatch'),
+        description: t('auth.passwordsMatchError'),
         variant: "destructive",
       });
       return;
@@ -146,8 +148,8 @@ const Auth = ({ onLogin }: AuthProps) => {
     if (!signupData.email || !signupData.password || !signupData.firstName || 
         !signupData.lastName || !signupData.phoneNumber || !signupData.dateOfBirth) {
       toast({
-        title: "Missing Information",
-        description: "Please fill in all required fields",
+        title: t('auth.missingInformation'),
+        description: t('auth.fillRequiredFields'),
         variant: "destructive",
       });
       return;
@@ -197,8 +199,8 @@ const Auth = ({ onLogin }: AuthProps) => {
       startTokenRefresh();
       
       toast({
-        title: "Account Created",
-        description: "Welcome to NexaBank!",
+        title: t('auth.accountCreated'),
+        description: t('auth.welcomeToBank'),
       });
       
       onLogin("user");
@@ -206,8 +208,8 @@ const Auth = ({ onLogin }: AuthProps) => {
       
     } catch (error: any) {
       toast({
-        title: "Registration Failed",
-        description: error.message || "Failed to create account. Please try again.",
+        title: t('auth.registrationFailed'),
+        description: error.message || t('auth.registrationFailedMsg'),
         variant: "destructive",
       });
     } finally {
@@ -220,30 +222,30 @@ const Auth = ({ onLogin }: AuthProps) => {
       <div className="w-full max-w-md space-y-6">
         <div className="text-center">
           <img src={nexaLogo} alt="NexaBank" className="mx-auto h-16 mb-4" />
-          <h1 className="text-2xl font-bold">Welcome to NexaBank</h1>
-          <p className="text-muted-foreground">Secure banking at your fingertips</p>
+          <h1 className="text-2xl font-bold">{t('auth.welcomeToNexaBank')}</h1>
+          <p className="text-muted-foreground">{t('auth.secureBanking')}</p>
         </div>
 
         <Card className="shadow-elevated">
           <CardHeader>
-            <CardTitle>Access Your Account</CardTitle>
-            <CardDescription>Login or create a new account to continue</CardDescription>
+            <CardTitle>{t('auth.accessYourAccount')}</CardTitle>
+            <CardDescription>{t('auth.loginOrCreate')}</CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="login" className="space-y-4">
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login">Login</TabsTrigger>
-                <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                <TabsTrigger value="login">{t('auth.login')}</TabsTrigger>
+                <TabsTrigger value="signup">{t('auth.signup')}</TabsTrigger>
               </TabsList>
 
               <TabsContent value="login">
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="login-email">Email</Label>
+                    <Label htmlFor="login-email">{t('auth.email')}</Label>
                     <Input
                       id="login-email"
                       type="email"
-                      placeholder="your.email@example.com"
+                      placeholder={t('auth.emailExample')}
                       value={loginData.email}
                       onChange={(e) =>
                         setLoginData({ ...loginData, email: e.target.value })
@@ -253,10 +255,11 @@ const Auth = ({ onLogin }: AuthProps) => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="login-password">Password</Label>
+                    <Label htmlFor="login-password">{t('common.password')}</Label>
                     <Input
                       id="login-password"
                       type="password"
+                      placeholder={t('auth.passwordPlaceholder')}
                       value={loginData.password}
                       onChange={(e) =>
                         setLoginData({ ...loginData, password: e.target.value })
@@ -271,10 +274,10 @@ const Auth = ({ onLogin }: AuthProps) => {
                     ) : (
                       <LogIn className="h-4 w-4" />
                     )}
-                    {isLoginLoading ? 'Logging in...' : 'Login'}
+                    {isLoginLoading ? t('common.loading') : t('common.login')}
                   </Button>
                   <p className="text-xs text-center text-muted-foreground">
-                    Demo: Use admin@nexabank.com for admin access
+                    {t('auth.demoText')}
                   </p>
                 </form>
               </TabsContent>
@@ -283,7 +286,7 @@ const Auth = ({ onLogin }: AuthProps) => {
                 <form onSubmit={handleSignup} className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="signup-firstname">First Name *</Label>
+                      <Label htmlFor="signup-firstname">{t('user.firstName')} *</Label>
                       <Input
                         id="signup-firstname"
                         type="text"
@@ -297,7 +300,7 @@ const Auth = ({ onLogin }: AuthProps) => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="signup-lastname">Last Name *</Label>
+                      <Label htmlFor="signup-lastname">{t('user.lastName')} *</Label>
                       <Input
                         id="signup-lastname"
                         type="text"
@@ -312,11 +315,11 @@ const Auth = ({ onLogin }: AuthProps) => {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signup-email">Email *</Label>
+                    <Label htmlFor="signup-email">{t('common.email')} *</Label>
                     <Input
                       id="signup-email"
                       type="email"
-                      placeholder="your.email@example.com"
+                      placeholder={t('auth.emailPlaceholder')}
                       value={signupData.email}
                       onChange={(e) =>
                         setSignupData({ ...signupData, email: e.target.value })
@@ -326,13 +329,13 @@ const Auth = ({ onLogin }: AuthProps) => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signup-phone">Phone Number *</Label>
+                    <Label htmlFor="signup-phone">{t('auth.phoneNumber')} *</Label>
                     <Input
                       id="signup-phone"
                       type="tel"
-                      placeholder="9876543210"
+                      placeholder={t('auth.phonePlaceholder')}
                       pattern="^[6-9]\d{9}$"
-                      title="Enter a valid 10-digit Indian mobile number"
+                      title={t('auth.phoneValidation')}
                       value={signupData.phoneNumber}
                       onChange={(e) =>
                         setSignupData({ ...signupData, phoneNumber: e.target.value })
@@ -342,7 +345,7 @@ const Auth = ({ onLogin }: AuthProps) => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signup-dob">Date of Birth *</Label>
+                    <Label htmlFor="signup-dob">{t('auth.dateOfBirth')} *</Label>
                     <Input
                       id="signup-dob"
                       type="date"
@@ -355,11 +358,11 @@ const Auth = ({ onLogin }: AuthProps) => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signup-address">Address</Label>
+                    <Label htmlFor="signup-address">{t('auth.address')}</Label>
                     <Input
                       id="signup-address"
                       type="text"
-                      placeholder="123 Main Street"
+                      placeholder={t('auth.addressPlaceholder')}
                       value={signupData.address}
                       onChange={(e) =>
                         setSignupData({ ...signupData, address: e.target.value })
@@ -369,11 +372,11 @@ const Auth = ({ onLogin }: AuthProps) => {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="signup-city">City</Label>
+                      <Label htmlFor="signup-city">{t('auth.city')}</Label>
                       <Input
                         id="signup-city"
                         type="text"
-                        placeholder="Mumbai"
+                        placeholder={t('auth.cityPlaceholder')}
                         value={signupData.city}
                         onChange={(e) =>
                           setSignupData({ ...signupData, city: e.target.value })
@@ -382,11 +385,11 @@ const Auth = ({ onLogin }: AuthProps) => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="signup-state">State</Label>
+                      <Label htmlFor="signup-state">{t('auth.state')}</Label>
                       <Input
                         id="signup-state"
                         type="text"
-                        placeholder="Maharashtra"
+                        placeholder={t('auth.statePlaceholder')}
                         value={signupData.state}
                         onChange={(e) =>
                           setSignupData({ ...signupData, state: e.target.value })
@@ -397,11 +400,11 @@ const Auth = ({ onLogin }: AuthProps) => {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="signup-country">Country</Label>
+                      <Label htmlFor="signup-country">{t('auth.country')}</Label>
                       <Input
                         id="signup-country"
                         type="text"
-                        placeholder="India"
+                        placeholder={t('auth.countryPlaceholder')}
                         value={signupData.country}
                         onChange={(e) =>
                           setSignupData({ ...signupData, country: e.target.value })
@@ -410,13 +413,13 @@ const Auth = ({ onLogin }: AuthProps) => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="signup-postal">Postal Code</Label>
+                      <Label htmlFor="signup-postal">{t('auth.postalCode')}</Label>
                       <Input
                         id="signup-postal"
                         type="text"
-                        placeholder="400001"
+                        placeholder={t('auth.postalCodePlaceholder')}
                         pattern="^[1-9]\d{5}$"
-                        title="Enter a valid 6-digit Indian postal code"
+                        title={t('auth.postalCodeValidation')}
                         value={signupData.postalCode}
                         onChange={(e) =>
                           setSignupData({ ...signupData, postalCode: e.target.value })
@@ -427,13 +430,13 @@ const Auth = ({ onLogin }: AuthProps) => {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="signup-aadhar">Aadhar Number</Label>
+                      <Label htmlFor="signup-aadhar">{t('auth.aadharNumber')}</Label>
                       <Input
                         id="signup-aadhar"
                         type="text"
-                        placeholder="234567890123"
+                        placeholder={t('auth.aadharPlaceholder')}
                         pattern="^[2-9]\d{11}$"
-                        title="Enter a valid 12-digit Aadhar number"
+                        title={t('auth.aadharValidation')}
                         value={signupData.aadharNumber}
                         onChange={(e) =>
                           setSignupData({ ...signupData, aadharNumber: e.target.value })
@@ -442,13 +445,13 @@ const Auth = ({ onLogin }: AuthProps) => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="signup-pan">PAN Number</Label>
+                      <Label htmlFor="signup-pan">{t('auth.panNumber')}</Label>
                       <Input
                         id="signup-pan"
                         type="text"
-                        placeholder="ABCDE1234F"
+                        placeholder={t('auth.panPlaceholder')}
                         pattern="^[A-Z]{5}[0-9]{4}[A-Z]{1}$"
-                        title="Enter a valid PAN number (e.g., ABCDE1234F)"
+                        title={t('auth.panValidation')}
                         value={signupData.panNumber}
                         onChange={(e) =>
                           setSignupData({ ...signupData, panNumber: e.target.value.toUpperCase() })
@@ -458,12 +461,12 @@ const Auth = ({ onLogin }: AuthProps) => {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signup-password">Password *</Label>
+                    <Label htmlFor="signup-password">{t('auth.password')} *</Label>
                     <Input
                       id="signup-password"
                       type="password"
                       minLength={8}
-                      title="Password must be at least 8 characters with uppercase, lowercase, number, and special character"
+                      title={t('auth.passwordValidation')}
                       value={signupData.password}
                       onChange={(e) =>
                         setSignupData({ ...signupData, password: e.target.value })
@@ -473,7 +476,7 @@ const Auth = ({ onLogin }: AuthProps) => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signup-confirm">Confirm Password *</Label>
+                    <Label htmlFor="signup-confirm">{t('auth.confirmPassword')} *</Label>
                     <Input
                       id="signup-confirm"
                       type="password"
@@ -494,10 +497,10 @@ const Auth = ({ onLogin }: AuthProps) => {
                     ) : (
                       <UserPlus className="h-4 w-4" />
                     )}
-                    {isSignupLoading ? 'Creating Account...' : 'Create Account'}
+                    {isSignupLoading ? t('auth.creatingAccount') : t('auth.createAccount')}
                   </Button>
                   <p className="text-xs text-center text-muted-foreground">
-                    * Required fields
+                    {t('auth.requiredFields')}
                   </p>
                 </form>
               </TabsContent>

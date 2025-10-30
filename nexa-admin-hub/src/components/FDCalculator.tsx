@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +23,7 @@ import {
 export const FDCalculator = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [principal, setPrincipal] = useState("");
   const [tenure, setTenure] = useState("");
   const [tenureUnit, setTenureUnit] = useState("YEARS");
@@ -38,13 +40,13 @@ export const FDCalculator = () => {
 
   // Available categories based on backend mapping
   const availableCategories = [
-    { code: "SR", name: "Senior Citizen", variants: ["SENIOR", "SENIOR_CITIZEN", "SR"] },
-    { code: "JR", name: "Junior", variants: ["JUNIOR", "JR"] },
-    { code: "DY", name: "Digi Youth", variants: ["DIGI_YOUTH", "DY"] },
-    { code: "GOLD", name: "Gold", variants: ["GOLD"] },
-    { code: "SIL", name: "Silver", variants: ["SILVER", "SIL"] },
-    { code: "PLAT", name: "Platinum", variants: ["PLATINUM", "PLAT"] },
-    { code: "EMP", name: "Employee", variants: ["EMPLOYEE", "EMP"] },
+    { code: "SR", name: t('calculator.seniorCitizen'), variants: ["SENIOR", "SENIOR_CITIZEN", "SR"] },
+    { code: "JR", name: t('calculator.junior'), variants: ["JUNIOR", "JR"] },
+    { code: "DY", name: t('calculator.digiYouth'), variants: ["DIGI_YOUTH", "DY"] },
+    { code: "GOLD", name: t('calculator.gold'), variants: ["GOLD"] },
+    { code: "SIL", name: t('calculator.silver'), variants: ["SILVER", "SIL"] },
+    { code: "PLAT", name: t('calculator.platinum'), variants: ["PLATINUM", "PLAT"] },
+    { code: "EMP", name: t('calculator.employee'), variants: ["EMPLOYEE", "EMP"] },
   ];
 
   // Fetch products on mount
@@ -61,8 +63,8 @@ export const FDCalculator = () => {
       } catch (error) {
         console.error("Failed to fetch products:", error);
         toast({
-          title: "Failed to load products",
-          description: "Could not fetch product list. Please refresh the page.",
+          title: t('error.fetchError'),
+          description: t('productShowcase.loading'),
           variant: "destructive",
         });
       }
@@ -73,8 +75,8 @@ export const FDCalculator = () => {
   const calculateFD = async () => {
     if (!principal || !tenure) {
       toast({
-        title: "Missing Information",
-        description: "Please fill in all required fields",
+        title: t('calculator.missingInfo'),
+        description: t('calculator.missingInfoDesc'),
         variant: "destructive",
       });
       return;
@@ -83,8 +85,8 @@ export const FDCalculator = () => {
     // Validate that categories are different if both are selected
     if (category1 && category2 && category1 === category2) {
       toast({
-        title: "Invalid Categories",
-        description: "Please select different categories. You cannot select the same category twice.",
+        title: t('calculator.invalidCategories'),
+        description: t('calculator.invalidCategoriesDesc'),
         variant: "destructive",
       });
       return;
@@ -146,7 +148,7 @@ export const FDCalculator = () => {
         }
         
         toast({
-          title: "Calculation Failed",
+          title: t('calculator.calculationFailed'),
           description: errorMessage,
           variant: "destructive",
         });
@@ -157,16 +159,16 @@ export const FDCalculator = () => {
       setCalculationResult(result);
 
       toast({
-        title: "Calculation Complete",
-        description: "Your FD maturity value has been calculated",
+        title: t('calculator.calculationComplete'),
+        description: t('calculator.calculationCompleteDesc'),
       });
       
     } catch (error: any) {
       console.error("Calculation error:", error);
       
       toast({
-        title: "Calculation Failed",
-        description: error.message || "Failed to calculate FD. Please try again.",
+        title: t('calculator.calculationFailed'),
+        description: error.message || t('error.tryAgain'),
         variant: "destructive",
       });
     } finally {
@@ -187,8 +189,8 @@ export const FDCalculator = () => {
   const createFDAccount = async () => {
     if (!calculationResult) {
       toast({
-        title: "No Calculation",
-        description: "Please calculate FD first before creating an account",
+        title: t('calculator.noCalculation'),
+        description: t('calculator.noCalculationDesc'),
         variant: "destructive",
       });
       return;
@@ -207,8 +209,8 @@ export const FDCalculator = () => {
       });
 
       toast({
-        title: "FD Account Created",
-        description: `Your FD account ${accountData.accountNumber} has been created successfully!`,
+        title: t('calculator.accountCreated'),
+        description: t('calculator.accountCreatedDesc', { accountNumber: accountData.accountNumber }),
       });
       
       // Navigate to dashboard
@@ -216,8 +218,8 @@ export const FDCalculator = () => {
       
     } catch (error: any) {
       toast({
-        title: "Account Creation Failed",
-        description: error.message || "Failed to create FD account. Please try again.",
+        title: t('calculator.accountCreationFailed'),
+        description: error.message || t('error.tryAgain'),
         variant: "destructive",
       });
     } finally {
@@ -236,20 +238,20 @@ export const FDCalculator = () => {
         <CardHeader className="space-y-1 bg-gradient-to-br from-primary/5 to-primary/10 border-b">
           <div className="flex items-center gap-2">
             <Calculator className="h-5 w-5 text-primary" />
-            <CardTitle>Fixed Deposit Calculator</CardTitle>
+            <CardTitle>{t('calculator.title')}</CardTitle>
           </div>
           <CardDescription>
-            Calculate your FD maturity value with compound interest
+            {t('calculator.description')}
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-6 space-y-6">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="principal">Principal Amount (₹)</Label>
+              <Label htmlFor="principal">{t('calculator.principal')} (₹)</Label>
               <Input
                 id="principal"
                 type="number"
-                placeholder="100000"
+                placeholder={t('calculator.principalPlaceholder')}
                 value={principal}
                 onChange={(e) => setPrincipal(e.target.value)}
                 className="text-lg"
@@ -258,10 +260,10 @@ export const FDCalculator = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="productCode">Product</Label>
+              <Label htmlFor="productCode">{t('calculator.product')}</Label>
               <Select value={productCode} onValueChange={setProductCode} disabled={isCalculating}>
                 <SelectTrigger id="productCode">
-                  <SelectValue placeholder="Select product" />
+                  <SelectValue placeholder={t('calculator.selectProduct')} />
                 </SelectTrigger>
                 <SelectContent>
                   {products.map((product) => (
@@ -274,11 +276,11 @@ export const FDCalculator = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="tenure">Tenure</Label>
+              <Label htmlFor="tenure">{t('calculator.tenure')}</Label>
               <Input
                 id="tenure"
                 type="number"
-                placeholder="5"
+                placeholder={t('calculator.tenurePlaceholder')}
                 value={tenure}
                 onChange={(e) => setTenure(e.target.value)}
                 className="text-lg"
@@ -287,23 +289,23 @@ export const FDCalculator = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="tenureUnit">Tenure Unit</Label>
+              <Label htmlFor="tenureUnit">{t('calculator.tenureUnit')}</Label>
               <Select value={tenureUnit} onValueChange={setTenureUnit} disabled={isCalculating}>
                 <SelectTrigger id="tenureUnit">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="YEARS">Years</SelectItem>
-                  <SelectItem value="MONTHS">Months</SelectItem>
+                  <SelectItem value="YEARS">{t('calculator.years')}</SelectItem>
+                  <SelectItem value="MONTHS">{t('calculator.months')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="category1">Category 1 (Optional)</Label>
+              <Label htmlFor="category1">{t('calculator.category1')}</Label>
               <Select value={category1 || undefined} onValueChange={setCategory1} disabled={isCalculating}>
                 <SelectTrigger id="category1">
-                  <SelectValue placeholder="None - Select category" />
+                  <SelectValue placeholder={t('calculator.noneSelectCategory')} />
                 </SelectTrigger>
                 <SelectContent>
                   {availableCategories.map((cat) => (
@@ -316,10 +318,10 @@ export const FDCalculator = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="category2">Category 2 (Optional)</Label>
+              <Label htmlFor="category2">{t('calculator.category2')}</Label>
               <Select value={category2 || undefined} onValueChange={setCategory2} disabled={isCalculating}>
                 <SelectTrigger id="category2">
-                  <SelectValue placeholder="None - Select category" />
+                  <SelectValue placeholder={t('calculator.noneSelectCategory')} />
                 </SelectTrigger>
                 <SelectContent>
                   {availableCategories.map((cat) => (
@@ -332,29 +334,29 @@ export const FDCalculator = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="fdType">FD Type</Label>
+              <Label htmlFor="fdType">{t('calculator.fdType')}</Label>
               <Select value={isCumulative ? "CUMULATIVE" : "NON_CUMULATIVE"} onValueChange={(val) => setIsCumulative(val === "CUMULATIVE")} disabled={isCalculating}>
                 <SelectTrigger id="fdType">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="CUMULATIVE">Cumulative</SelectItem>
-                  <SelectItem value="NON_CUMULATIVE">Non-Cumulative</SelectItem>
+                  <SelectItem value="CUMULATIVE">{t('calculator.cumulative')}</SelectItem>
+                  <SelectItem value="NON_CUMULATIVE">{t('calculator.nonCumulative')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             {!isCumulative && (
               <div className="space-y-2">
-                <Label htmlFor="payout">Payout Frequency</Label>
+                <Label htmlFor="payout">{t('calculator.payoutFrequency')}</Label>
                 <Select value={payoutFreq} onValueChange={setPayoutFreq} disabled={isCalculating}>
                   <SelectTrigger id="payout">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="MONTHLY">Monthly</SelectItem>
-                    <SelectItem value="QUARTERLY">Quarterly</SelectItem>
-                    <SelectItem value="YEARLY">Yearly</SelectItem>
+                    <SelectItem value="MONTHLY">{t('calculator.monthly')}</SelectItem>
+                    <SelectItem value="QUARTERLY">{t('calculator.quarterly')}</SelectItem>
+                    <SelectItem value="YEARLY">{t('calculator.yearly')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -367,7 +369,7 @@ export const FDCalculator = () => {
             ) : (
               <Calculator className="mr-2 h-4 w-4" />
             )}
-            {isCalculating ? 'Calculating...' : 'Calculate Maturity Value'}
+            {isCalculating ? t('calculator.calculating') : t('calculator.calculate')}
           </Button>
 
           {calculationResult && (
@@ -375,7 +377,7 @@ export const FDCalculator = () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-primary">
                   <TrendingUp className="h-5 w-5" />
-                  <h3 className="font-semibold">Calculation Results</h3>
+                  <h3 className="font-semibold">{t('calculator.calculationResults')}</h3>
                 </div>
                 <Button 
                   onClick={handleCreateAccount} 
@@ -385,19 +387,19 @@ export const FDCalculator = () => {
                   {isCreatingAccount ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : null}
-                  {isCreatingAccount ? 'Creating...' : 'Create FD Account'}
+                  {isCreatingAccount ? t('calculator.creating') : t('calculator.createFDAccount')}
                 </Button>
               </div>
               
               <div className="grid gap-4 md:grid-cols-3">
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Maturity Value</p>
+                  <p className="text-sm text-muted-foreground">{t('calculator.maturityValue')}</p>
                   <p className="text-2xl font-bold text-foreground">
                     ₹{calculationResult.maturity_value?.toLocaleString('en-IN')}
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Interest Earned</p>
+                  <p className="text-sm text-muted-foreground">{t('calculator.interestEarned')}</p>
                   <p className="text-2xl font-bold text-success">
                     ₹{(() => {
                       const principalNum = parseFloat(principal);
@@ -407,7 +409,7 @@ export const FDCalculator = () => {
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Effective APY</p>
+                  <p className="text-sm text-muted-foreground">{t('calculator.effectiveAPY')}</p>
                   <p className="text-2xl font-bold text-primary">
                     {calculationResult.apy?.toFixed(2)}%
                   </p>
@@ -417,7 +419,7 @@ export const FDCalculator = () => {
               {!isCumulative && calculationResult.payout_amount && (
                 <div className="pt-4 border-t">
                   <div className="space-y-1">
-                    <p className="text-sm text-muted-foreground">Periodic Payout ({payoutFreq})</p>
+                    <p className="text-sm text-muted-foreground">{t('calculator.periodicPayout')} ({payoutFreq})</p>
                     <p className="text-xl font-bold text-info">
                       ₹{calculationResult.payout_amount?.toLocaleString('en-IN')}
                     </p>
@@ -433,14 +435,14 @@ export const FDCalculator = () => {
       <AlertDialog open={showLoginPrompt} onOpenChange={setShowLoginPrompt}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Login Required</AlertDialogTitle>
+            <AlertDialogTitle>{t('calculator.loginRequired')}</AlertDialogTitle>
             <AlertDialogDescription>
-              You need to login to create an FD account. Would you like to login now?
+              {t('calculator.loginRequiredDesc')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleLoginRedirect}>Login</AlertDialogAction>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleLoginRedirect}>{t('common.login')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

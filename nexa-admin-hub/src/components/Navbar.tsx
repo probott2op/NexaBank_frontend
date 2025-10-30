@@ -4,6 +4,8 @@ import { LogOut, User } from "lucide-react";
 import nexaLogo from "@/assets/nexa-logo.png";
 import { authAPI } from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "./LanguageSwitcher";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +27,7 @@ export const Navbar = ({ isAuthenticated, userRole, userName, onLogout }: Navbar
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation();
   
   const handleLogout = async () => {
     try {
@@ -32,8 +35,8 @@ export const Navbar = ({ isAuthenticated, userRole, userName, onLogout }: Navbar
       await authAPI.logout();
       
       toast({
-        title: "Logged Out",
-        description: "You have been successfully logged out",
+        title: t('common.logout'),
+        description: t('auth.loginSuccess'),
       });
     } catch (error) {
       console.error('Logout API failed:', error);
@@ -61,19 +64,21 @@ export const Navbar = ({ isAuthenticated, userRole, userName, onLogout }: Navbar
         <div className="flex items-center gap-4">
           {!isAuthenticated ? (
             <>
+              <LanguageSwitcher />
               <Link to="/auth">
-                <Button variant="ghost">Login</Button>
+                <Button variant="ghost">{t('common.login')}</Button>
               </Link>
               <Link to="/auth">
-                <Button>Get Started</Button>
+                <Button>{t('auth.signUp')}</Button>
               </Link>
             </>
           ) : (
             <>
+              <LanguageSwitcher />
               <Link to={userRole === "admin" ? "/admin" : "/dashboard"}>
                 <Button variant="ghost" className="gap-2">
                   <User className="h-4 w-4" />
-                  {userRole === "admin" ? "Admin Panel" : "Dashboard"}
+                  {userRole === "admin" ? t('nav.admin') : t('nav.dashboard')}
                 </Button>
               </Link>
               
@@ -90,9 +95,9 @@ export const Navbar = ({ isAuthenticated, userRole, userName, onLogout }: Navbar
                 <DropdownMenuContent className="w-56" align="end" forceMount>
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">{userName || 'User'}</p>
+                      <p className="text-sm font-medium leading-none">{userName || t('user.users')}</p>
                       <p className="text-xs leading-none text-muted-foreground">
-                        {userRole === "admin" ? "Administrator" : "Customer"}
+                        {userRole === "admin" ? t('admin.adminDashboard') : t('customer.customerProfile')}
                       </p>
                     </div>
                   </DropdownMenuLabel>
@@ -100,12 +105,12 @@ export const Navbar = ({ isAuthenticated, userRole, userName, onLogout }: Navbar
                   {userRole !== "admin" && (
                     <DropdownMenuItem onClick={() => navigate('/profile')}>
                       <User className="mr-2 h-4 w-4" />
-                      <span>My Profile</span>
+                      <span>{t('nav.profile')}</span>
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="mr-2 h-4 w-4" />
-                    <span>Logout</span>
+                    <span>{t('common.logout')}</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

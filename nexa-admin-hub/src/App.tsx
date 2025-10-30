@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { I18nextProvider } from "react-i18next";
+import i18n from "./i18n/config";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -56,78 +58,80 @@ const App = () => {
   };
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <div className="min-h-screen flex flex-col">
-            <Navbar 
-              isAuthenticated={isAuthenticated} 
-              userRole={userRole}
-              userName={userName}
-              onLogout={handleLogout}
-            />
-            <main className="flex-1">
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route 
-                  path="/auth" 
-                  element={
-                    isAuthenticated ? (
-                      <Navigate to={userRole === "admin" ? "/admin" : "/dashboard"} replace />
-                    ) : (
-                      <Auth onLogin={handleLogin} />
-                    )
-                  } 
-                />
-                <Route 
-                  path="/admin" 
-                  element={
-                    isAuthenticated && userRole === "admin" ? (
-                      <AdminDashboard />
-                    ) : (
-                      <Navigate to="/auth" replace />
-                    )
-                  } 
-                />
-                <Route 
-                  path="/admin/products/:productCode" 
-                  element={
-                    isAuthenticated && userRole === "admin" ? (
-                      <ProductDetails />
-                    ) : (
-                      <Navigate to="/auth" replace />
-                    )
-                  } 
-                />
-                <Route 
-                  path="/dashboard" 
-                  element={
-                    isAuthenticated && userRole === "user" ? (
-                      <UserDashboard />
-                    ) : (
-                      <Navigate to="/auth" replace />
-                    )
-                  } 
-                />
-                <Route 
-                  path="/profile" 
-                  element={
-                    isAuthenticated && userRole === "user" ? (
-                      <CustomerProfile />
-                    ) : (
-                      <Navigate to="/auth" replace />
-                    )
-                  } 
-                />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </main>
-          </div>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <I18nextProvider i18n={i18n}>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <div className="min-h-screen flex flex-col">
+              <Navbar 
+                isAuthenticated={isAuthenticated} 
+                userRole={userRole}
+                userName={userName}
+                onLogout={handleLogout}
+              />
+              <main className="flex-1">
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route 
+                    path="/auth" 
+                    element={
+                      isAuthenticated ? (
+                        <Navigate to={userRole === "admin" ? "/admin" : "/dashboard"} replace />
+                      ) : (
+                        <Auth onLogin={handleLogin} />
+                      )
+                    } 
+                  />
+                  <Route 
+                    path="/admin" 
+                    element={
+                      isAuthenticated && userRole === "admin" ? (
+                        <AdminDashboard />
+                      ) : (
+                        <Navigate to="/auth" replace />
+                      )
+                    } 
+                  />
+                  <Route 
+                    path="/admin/products/:productCode" 
+                    element={
+                      isAuthenticated && userRole === "admin" ? (
+                        <ProductDetails />
+                      ) : (
+                        <Navigate to="/auth" replace />
+                      )
+                    } 
+                  />
+                  <Route 
+                    path="/dashboard" 
+                    element={
+                      isAuthenticated && userRole === "user" ? (
+                        <UserDashboard />
+                      ) : (
+                        <Navigate to="/auth" replace />
+                      )
+                    } 
+                  />
+                  <Route 
+                    path="/profile" 
+                    element={
+                      isAuthenticated && userRole === "user" ? (
+                        <CustomerProfile />
+                      ) : (
+                        <Navigate to="/auth" replace />
+                      )
+                    } 
+                  />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </main>
+            </div>
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </I18nextProvider>
   );
 };
 

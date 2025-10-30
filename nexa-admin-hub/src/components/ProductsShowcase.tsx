@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -6,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { TrendingUp, Receipt, Shield } from "lucide-react";
 
 export const ProductsShowcase = () => {
+  const { t } = useTranslation();
   const [products, setProducts] = useState<any[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -50,7 +52,7 @@ export const ProductsShowcase = () => {
   if (loading) {
     return (
       <div className="text-center py-12">
-        <p className="text-muted-foreground">Loading products...</p>
+        <p className="text-muted-foreground">{t('productShowcase.loading')}</p>
       </div>
     );
   }
@@ -58,7 +60,7 @@ export const ProductsShowcase = () => {
   if (products.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-muted-foreground">No products available at the moment.</p>
+        <p className="text-muted-foreground">{t('productShowcase.noProducts')}</p>
       </div>
     );
   }
@@ -90,9 +92,9 @@ export const ProductsShowcase = () => {
             </CardHeader>
             <CardContent>
               <div className="text-sm text-muted-foreground">
-                <p>Interest: {product.interestType}</p>
+                <p>{t('productShowcase.interest')}: {product.interestType}</p>
                 {product.compoundingFrequency && (
-                  <p>Compounding: {product.compoundingFrequency}</p>
+                  <p>{t('productShowcase.compounding')}: {product.compoundingFrequency}</p>
                 )}
               </div>
             </CardContent>
@@ -104,9 +106,9 @@ export const ProductsShowcase = () => {
       {selectedProduct && (
         <Card>
           <CardHeader>
-            <CardTitle>{selectedProduct.productName} - Details</CardTitle>
+            <CardTitle>{selectedProduct.productName} - {t('productShowcase.details')}</CardTitle>
             <CardDescription>
-              Explore the rules, charges, and benefits for this product
+              {t('productShowcase.exploreDetails')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -114,15 +116,15 @@ export const ProductsShowcase = () => {
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="rules">
                   <Shield className="h-4 w-4 mr-2" />
-                  Rules & Benefits
+                  {t('productShowcase.rulesAndBenefits')}
                 </TabsTrigger>
                 <TabsTrigger value="charges">
                   <Receipt className="h-4 w-4 mr-2" />
-                  Charges & Fees
+                  {t('productShowcase.chargesAndFees')}
                 </TabsTrigger>
                 <TabsTrigger value="rates">
                   <TrendingUp className="h-4 w-4 mr-2" />
-                  Interest Rates
+                  {t('productShowcase.interestRates')}
                 </TabsTrigger>
               </TabsList>
 
@@ -133,10 +135,10 @@ export const ProductsShowcase = () => {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Rule Name</TableHead>
-                          <TableHead>Type</TableHead>
-                          <TableHead>Data Type</TableHead>
-                          <TableHead>Value</TableHead>
+                          <TableHead>{t('productShowcase.ruleName')}</TableHead>
+                          <TableHead>{t('productShowcase.ruleType')}</TableHead>
+                          <TableHead>{t('productShowcase.dataType')}</TableHead>
+                          <TableHead>{t('productShowcase.value')}</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -157,7 +159,7 @@ export const ProductsShowcase = () => {
                   </div>
                 ) : (
                   <p className="text-center py-8 text-muted-foreground">
-                    No rules configured for this product
+                    {t('productShowcase.noRules')}
                   </p>
                 )}
               </TabsContent>
@@ -169,12 +171,12 @@ export const ProductsShowcase = () => {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Charge Name</TableHead>
-                          <TableHead>Type</TableHead>
-                          <TableHead>Calculation</TableHead>
-                          <TableHead>Amount</TableHead>
-                          <TableHead>Frequency</TableHead>
-                          <TableHead>Debit/Credit</TableHead>
+                          <TableHead>{t('productShowcase.chargeName')}</TableHead>
+                          <TableHead>{t('productShowcase.chargeType')}</TableHead>
+                          <TableHead>{t('productShowcase.calculation')}</TableHead>
+                          <TableHead>{t('common.amount')}</TableHead>
+                          <TableHead>{t('productShowcase.frequency')}</TableHead>
+                          <TableHead>{t('productShowcase.debitCredit')}</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -203,7 +205,7 @@ export const ProductsShowcase = () => {
                   </div>
                 ) : (
                   <p className="text-center py-8 text-muted-foreground">
-                    No charges configured for this product
+                    {t('productShowcase.noCharges')}
                   </p>
                 )}
               </TabsContent>
@@ -215,17 +217,17 @@ export const ProductsShowcase = () => {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Tenure (Months)</TableHead>
-                          <TableHead>Cumulative</TableHead>
-                          <TableHead>Monthly</TableHead>
-                          <TableHead>Quarterly</TableHead>
-                          <TableHead>Yearly</TableHead>
+                          <TableHead>{t('productShowcase.tenureMonths')}</TableHead>
+                          <TableHead>{t('calculator.cumulative')}</TableHead>
+                          <TableHead>{t('calculator.monthly')}</TableHead>
+                          <TableHead>{t('calculator.quarterly')}</TableHead>
+                          <TableHead>{t('calculator.yearly')}</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {selectedProduct.productInterests.map((rate: any) => (
                           <TableRow key={rate.rateId}>
-                            <TableCell className="font-medium">{rate.termInMonths} months</TableCell>
+                            <TableCell className="font-medium">{rate.termInMonths} {t('calculator.months').toLowerCase()}</TableCell>
                             <TableCell className="font-semibold text-primary">
                               {rate.rateCumulative}%
                             </TableCell>
@@ -239,7 +241,7 @@ export const ProductsShowcase = () => {
                   </div>
                 ) : (
                   <p className="text-center py-8 text-muted-foreground">
-                    No interest rates configured for this product
+                    {t('productShowcase.noRates')}
                   </p>
                 )}
               </TabsContent>

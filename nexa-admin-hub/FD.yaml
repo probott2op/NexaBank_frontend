@@ -189,6 +189,21 @@ servers:
 security:
   - Bearer Authentication: []
 tags:
+  - name: System Time Management (TEST ONLY)
+    description: |
+      Administrative API for controlling the application's logical clock.
+
+      **⚠️ WARNING: This API is DISABLED in production environments.**
+
+      These endpoints allow you to manipulate the application's perception of time
+      for testing purposes. All date-sensitive operations (interest calculations,
+      maturity processing, EOD jobs) will use the logical time set here.
+
+      ## Common Testing Scenarios
+
+      1. **Fast-forward to maturity date**: Set logical date to maturity date, then trigger batch job
+      2. **Test end-of-month**: Set date to last day of month at 23:00, run EOD process
+      3. **Test interest accrual**: Advance time day-by-day and verify interest calculations
   - name: FD Account Management
     description: |
       Comprehensive API for managing Fixed Deposit (FD) accounts throughout their complete lifecycle.
@@ -493,6 +508,53 @@ paths:
             '*/*':
               schema:
                 $ref: '#/components/schemas/FDAccountView'
+  /api/v1/accounts/{accountNumber}/statement:
+    post:
+      tags:
+        - FD Account Management
+      summary: Generate account statement
+      description: Generate and send FD account statement via Kafka to notification service for the specified period
+      operationId: generateStatement
+      parameters:
+        - name: accountNumber
+          in: path
+          description: FD Account number
+          required: true
+          schema:
+            type: string
+          example: FD202401150001
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatementRequest'
+        required: true
+      responses:
+        '200':
+          description: Statement generation request accepted
+          content:
+            application/json:
+              examples:
+                Success Response:
+                  description: Success Response
+                  value:
+                    message: Statement generation request accepted for account FD202401150001
+        '400':
+          description: Invalid date range
+          content:
+            '*/*':
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+        '404':
+          description: Account not found
+          content:
+            '*/*':
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
   /api/v1/accounts/{accountNumber}/roles:
     post:
       tags:
@@ -532,6 +594,106 @@ paths:
             '*/*':
               schema:
                 $ref: '#/components/schemas/FDAccountView'
+  /api/admin/time/set-instant:
+    post:
+      tags:
+        - System Time Management (TEST ONLY)
+      summary: Set logical time to specific instant
+      description: Sets the application's logical clock to an absolute instant in time (ISO-8601 format)
+      operationId: setLogicalInstant
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetInstantRequest'
+        required: true
+      responses:
+        '200':
+          description: Logical time set successfully
+          content:
+            application/json:
+              example:
+                newLogicalDate: '2026-01-31'
+                newLogicalDateTime: '2026-01-31T23:00:00'
+                newLogicalInstant: '2026-01-31T18:00:00Z'
+                message: Logical time set successfully
+        '400':
+          description: Invalid date format
+          content:
+            '*/*':
+              schema:
+                type: object
+                additionalProperties:
+                  type: object
+  /api/admin/time/set-date:
+    post:
+      tags:
+        - System Time Management (TEST ONLY)
+      summary: Set logical date
+      description: Sets the application's logical clock to a specific date at start of day (00:00:00)
+      operationId: setLogicalDate
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetDateRequest'
+        required: true
+      responses:
+        '200':
+          description: Logical date set successfully
+          content:
+            application/json:
+              example:
+                newLogicalDate: '2026-01-31'
+                newLogicalDateTime: '2026-01-31T00:00:00'
+                message: Logical date set successfully
+        '400':
+          description: Invalid date format
+          content:
+            '*/*':
+              schema:
+                type: object
+                additionalProperties:
+                  type: object
+  /api/admin/time/reset:
+    post:
+      tags:
+        - System Time Management (TEST ONLY)
+      summary: Reset to system time
+      description: Resets the logical clock to the current actual system time
+      operationId: resetToSystemTime
+      responses:
+        '200':
+          description: Logical time reset to system time
+          content:
+            application/json:
+              example:
+                newLogicalDate: '2025-10-29'
+                newLogicalDateTime: '2025-10-29T14:30:00'
+                message: Logical time reset to system time
+  /api/admin/time/advance:
+    post:
+      tags:
+        - System Time Management (TEST ONLY)
+      summary: Advance logical time
+      description: Advances the logical clock forward by a specified duration (days and/or hours)
+      operationId: advanceLogicalTime
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdvanceTimeRequest'
+        required: true
+      responses:
+        '200':
+          description: Logical time advanced successfully
+          content:
+            application/json:
+              example:
+                advancedBy: P1DT2H
+                newLogicalDate: '2026-02-01'
+                newLogicalDateTime: '2026-02-01T02:00:00'
+                message: Logical time advanced successfully
   /api/v1/reports/accounts/maturing:
     get:
       tags:
@@ -969,6 +1131,23 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/FDAccountView'
+  /api/admin/time/current:
+    get:
+      tags:
+        - System Time Management (TEST ONLY)
+      summary: Get current logical time
+      description: Returns the current logical date and time that the application is operating on
+      operationId: getCurrentLogicalTime
+      responses:
+        '200':
+          description: Current logical time retrieved successfully
+          content:
+            application/json:
+              example:
+                logicalDate: '2026-01-31'
+                logicalDateTime: '2026-01-31T23:55:00'
+                logicalInstant: '2026-01-31T18:55:00Z'
+                message: Current logical time
 components:
   schemas:
     CreateFDAccountRequest:
@@ -1092,6 +1271,23 @@ components:
       properties:
         reason:
           type: string
+    StatementRequest:
+      required:
+        - endDate
+        - startDate
+      type: object
+      properties:
+        startDate:
+          type: string
+          description: Statement period start date
+          format: date
+          example: '2025-10-01'
+        endDate:
+          type: string
+          description: Statement period end date
+          format: date
+          example: '2025-10-27'
+      description: Statement period details
     AddAccountHolderRequest:
       required:
         - customerId
@@ -1109,6 +1305,28 @@ components:
             - GUARDIAN
         ownershipPercentage:
           type: number
+    SetInstantRequest:
+      type: object
+      properties:
+        newLogicalInstant:
+          type: string
+      description: Request containing the new instant in ISO-8601 format
+    SetDateRequest:
+      type: object
+      properties:
+        newLogicalDate:
+          type: string
+      description: Request containing the new date in YYYY-MM-DD format
+    AdvanceTimeRequest:
+      type: object
+      properties:
+        days:
+          type: integer
+          format: int64
+        hours:
+          type: integer
+          format: int64
+      description: Request containing days and hours to advance
     PrematureWithdrawalInquiryResponse:
       type: object
       properties:

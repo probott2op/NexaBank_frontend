@@ -563,6 +563,63 @@ export const fdAccountAPI = {
   // Get current user info
   getCurrentUser: () => 
     apiFetch(`${API_URLS.FD_ACCOUNT}/api/v1/auth/me`),
+  
+  // Generate account statement
+  generateStatement: (accountNumber: string, data: { startDate: string; endDate: string }) => 
+    apiFetch(`${API_URLS.FD_ACCOUNT}/api/v1/accounts/${accountNumber}/statement`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  
+  // Reports APIs
+  getMaturingAccounts: (days: number) => 
+    apiFetch(`${API_URLS.FD_ACCOUNT}/api/v1/reports/accounts/maturing?days=${days}`),
+  
+  getCreatedAccounts: (startDate: string, endDate: string) => 
+    apiFetch(`${API_URLS.FD_ACCOUNT}/api/v1/reports/accounts/created?startDate=${startDate}&endDate=${endDate}`),
+  
+  getClosedAccounts: (startDate: string, endDate: string, status?: string) => {
+    const url = `${API_URLS.FD_ACCOUNT}/api/v1/reports/accounts/closed?startDate=${startDate}&endDate=${endDate}`;
+    return apiFetch(status ? `${url}&status=${status}` : url);
+  },
+  
+  // Batch Jobs APIs
+  runInterestCalculationJob: () => 
+    apiFetch(`${API_URLS.FD_ACCOUNT}/api/v1/jobs/run/interest-calculation`, {
+      method: 'POST',
+    }),
+  
+  runMaturityProcessingJob: () => 
+    apiFetch(`${API_URLS.FD_ACCOUNT}/api/v1/jobs/run/maturity-processing`, {
+      method: 'POST',
+    }),
+  
+  // System Time Management APIs (TEST ONLY)
+  getCurrentLogicalTime: () => 
+    apiFetch(`${API_URLS.FD_ACCOUNT}/api/admin/time/current`),
+  
+  setLogicalDate: (newLogicalDate: string) => 
+    apiFetch(`${API_URLS.FD_ACCOUNT}/api/admin/time/set-date`, {
+      method: 'POST',
+      body: JSON.stringify({ newLogicalDate }),
+    }),
+  
+  setLogicalInstant: (newLogicalInstant: string) => 
+    apiFetch(`${API_URLS.FD_ACCOUNT}/api/admin/time/set-instant`, {
+      method: 'POST',
+      body: JSON.stringify({ newLogicalInstant }),
+    }),
+  
+  advanceLogicalTime: (days?: number, hours?: number) => 
+    apiFetch(`${API_URLS.FD_ACCOUNT}/api/admin/time/advance`, {
+      method: 'POST',
+      body: JSON.stringify({ days, hours }),
+    }),
+  
+  resetToSystemTime: () => 
+    apiFetch(`${API_URLS.FD_ACCOUNT}/api/admin/time/reset`, {
+      method: 'POST',
+    }),
 };
 
 // Customer Profile APIs

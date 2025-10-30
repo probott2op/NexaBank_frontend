@@ -2,9 +2,12 @@ import { FDCalculator } from "@/components/FDCalculator";
 import { ProductsShowcase } from "@/components/ProductsShowcase";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { ArrowRight, Shield, TrendingUp, Users, Zap } from "lucide-react";
 
 const Index = () => {
+  const { t } = useTranslation();
+  
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -14,18 +17,17 @@ const Index = () => {
         <div className="container relative z-10 px-4">
           <div className="mx-auto max-w-4xl text-center">
             <h1 className="mb-6 text-5xl font-bold tracking-tight sm:text-6xl md:text-7xl">
-              Banking Made Simple,
+              {t('home.heroTitle')}
               <br />
-              <span className="text-white/90">Returns Made Better</span>
+              <span className="text-white/90">{t('home.heroSubtitle')}</span>
             </h1>
             <p className="mb-8 text-xl text-white/90 sm:text-2xl">
-              Secure your future with NexaBank's competitive Fixed Deposit rates
-              and exceptional customer service
+              {t('home.heroDescription')}
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <Link to="/auth">
                 <Button size="lg" variant="secondary" className="gap-2 shadow-elevated">
-                  Open Account
+                  {t('home.openAccount')}
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
@@ -35,7 +37,7 @@ const Index = () => {
                 className="gap-2 border-white/30 bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm"
                 onClick={() => document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' })}
               >
-                View Products
+                {t('home.viewProducts')}
               </Button>
               <Button 
                 size="lg" 
@@ -43,7 +45,7 @@ const Index = () => {
                 className="gap-2 border-white/30 bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm"
                 onClick={() => document.getElementById('calculator')?.scrollIntoView({ behavior: 'smooth' })}
               >
-                Calculate Returns
+                {t('home.calculateReturns')}
               </Button>
             </div>
           </div>
@@ -58,9 +60,9 @@ const Index = () => {
               <div className="mb-4 rounded-full bg-primary/10 p-3">
                 <Shield className="h-8 w-8 text-primary" />
               </div>
-              <h3 className="mb-2 text-lg font-semibold">Secure & Trusted</h3>
+              <h3 className="mb-2 text-lg font-semibold">{t('home.secureTitle')}</h3>
               <p className="text-sm text-muted-foreground">
-                Bank-grade security with encrypted transactions
+                {t('home.secureDesc')}
               </p>
             </div>
 
@@ -68,9 +70,9 @@ const Index = () => {
               <div className="mb-4 rounded-full bg-primary/10 p-3">
                 <TrendingUp className="h-8 w-8 text-primary" />
               </div>
-              <h3 className="mb-2 text-lg font-semibold">High Returns</h3>
+              <h3 className="mb-2 text-lg font-semibold">{t('home.highReturnsTitle')}</h3>
               <p className="text-sm text-muted-foreground">
-                Competitive interest rates up to 7.75% p.a.
+                {t('home.highReturnsDesc')}
               </p>
             </div>
 
@@ -78,9 +80,9 @@ const Index = () => {
               <div className="mb-4 rounded-full bg-primary/10 p-3">
                 <Zap className="h-8 w-8 text-primary" />
               </div>
-              <h3 className="mb-2 text-lg font-semibold">Instant Processing</h3>
+              <h3 className="mb-2 text-lg font-semibold">{t('home.instantTitle')}</h3>
               <p className="text-sm text-muted-foreground">
-                Quick account opening and FD booking
+                {t('home.instantDesc')}
               </p>
             </div>
 
@@ -88,9 +90,9 @@ const Index = () => {
               <div className="mb-4 rounded-full bg-primary/10 p-3">
                 <Users className="h-8 w-8 text-primary" />
               </div>
-              <h3 className="mb-2 text-lg font-semibold">24/7 Support</h3>
+              <h3 className="mb-2 text-lg font-semibold">{t('home.supportTitle')}</h3>
               <p className="text-sm text-muted-foreground">
-                Dedicated customer service team
+                {t('home.supportDesc')}
               </p>
             </div>
           </div>
@@ -103,10 +105,10 @@ const Index = () => {
           <div className="mx-auto max-w-7xl">
             <div className="mb-10 text-center">
               <h2 className="mb-4 text-4xl font-bold">
-                Our Fixed Deposit Products
+                {t('home.productsHeading')}
               </h2>
               <p className="text-lg text-muted-foreground">
-                Explore our FD products with their rates, charges, and benefits
+                {t('home.productsSubheading')}
               </p>
             </div>
             <ProductsShowcase />
@@ -120,10 +122,10 @@ const Index = () => {
           <div className="mx-auto max-w-4xl">
             <div className="mb-10 text-center">
               <h2 className="mb-4 text-4xl font-bold">
-                Calculate Your Returns
+                {t('home.calculatorHeading')}
               </h2>
               <p className="text-lg text-muted-foreground">
-                Use our FD calculator to see how much you can earn
+                {t('home.calculatorSubheading')}
               </p>
             </div>
             <FDCalculator />
@@ -135,14 +137,14 @@ const Index = () => {
       <section className="bg-secondary py-16 text-white">
         <div className="container px-4 text-center">
           <h2 className="mb-4 text-3xl font-bold">
-            Ready to Start Your Investment Journey?
+            {t('home.heroTitle')}
           </h2>
           <p className="mb-8 text-lg text-white/90">
-            Join thousands of satisfied customers who trust NexaBank
+            {t('home.heroDescription')}
           </p>
           <Link to="/auth">
             <Button size="lg" variant="secondary" className="gap-2 shadow-elevated">
-              Get Started Today
+              {t('home.openAccount')}
               <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>

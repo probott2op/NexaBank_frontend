@@ -1,13 +1,18 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, Users, Package, TrendingUp, DollarSign, Activity } from "lucide-react";
+import { BarChart3, Users, Package, TrendingUp, DollarSign, Activity, FileText, Play, Clock } from "lucide-react";
 import { UserManagementTable } from "@/components/admin/UserManagementTable";
 import { ProductManagementTable } from "@/components/admin/ProductManagementTable";
+import ReportsPanel from "@/components/admin/ReportsPanel";
+import BatchJobsPanel from "@/components/admin/BatchJobsPanel";
+import TimeManagementPanel from "@/components/admin/TimeManagementPanel";
 import { authAPI } from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 const AdminDashboard = () => {
+  const { t } = useTranslation();
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -100,18 +105,36 @@ const AdminDashboard = () => {
 
         {/* Management Tabs */}
         <Tabs defaultValue="users" className="space-y-6">
-          <TabsList>
+          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6">
             <TabsTrigger value="users" className="gap-2">
               <Users className="h-4 w-4" />
-              User Management
+              <span className="hidden sm:inline">User Management</span>
+              <span className="sm:hidden">Users</span>
             </TabsTrigger>
             <TabsTrigger value="products" className="gap-2">
               <Package className="h-4 w-4" />
-              Product Management
+              <span className="hidden sm:inline">Product Management</span>
+              <span className="sm:hidden">Products</span>
+            </TabsTrigger>
+            <TabsTrigger value="reports" className="gap-2">
+              <FileText className="h-4 w-4" />
+              <span className="hidden sm:inline">{t('admin.reports')}</span>
+              <span className="sm:hidden">{t('admin.reports')}</span>
+            </TabsTrigger>
+            <TabsTrigger value="batchJobs" className="gap-2">
+              <Play className="h-4 w-4" />
+              <span className="hidden sm:inline">{t('admin.batchJobs')}</span>
+              <span className="sm:hidden">Jobs</span>
+            </TabsTrigger>
+            <TabsTrigger value="timeManagement" className="gap-2">
+              <Clock className="h-4 w-4" />
+              <span className="hidden sm:inline">{t('admin.timeManagement')}</span>
+              <span className="sm:hidden">Time</span>
             </TabsTrigger>
             <TabsTrigger value="analytics" className="gap-2">
               <BarChart3 className="h-4 w-4" />
-              Analytics
+              <span className="hidden sm:inline">Analytics</span>
+              <span className="sm:hidden">Analytics</span>
             </TabsTrigger>
           </TabsList>
 
@@ -137,6 +160,18 @@ const AdminDashboard = () => {
                 <ProductManagementTable />
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="reports">
+            <ReportsPanel />
+          </TabsContent>
+
+          <TabsContent value="batchJobs">
+            <BatchJobsPanel />
+          </TabsContent>
+
+          <TabsContent value="timeManagement">
+            <TimeManagementPanel />
           </TabsContent>
 
           <TabsContent value="analytics">

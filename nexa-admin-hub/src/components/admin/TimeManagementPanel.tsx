@@ -91,11 +91,13 @@ const TimeManagementPanel = () => {
 
     try {
       setUpdating(true);
-      await fdAccountAPI.setLogicalInstant(logicalInstant);
+      // Convert datetime-local format to ISO 8601 with Z suffix
+      const isoInstant = logicalInstant.includes('Z') ? logicalInstant : `${logicalInstant}:00Z`;
+      await fdAccountAPI.setLogicalInstant(isoInstant);
       
       toast({
         title: t('timeManagement.timeUpdated'),
-        description: `Logical instant set to ${logicalInstant}`,
+        description: `Logical instant set to ${isoInstant}`,
       });
 
       await fetchCurrentTime();

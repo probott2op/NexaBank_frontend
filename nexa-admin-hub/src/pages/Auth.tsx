@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import nexaLogo from "@/assets/nexa-logo.png";
 import { LogIn, UserPlus, Loader2 } from "lucide-react";
@@ -36,8 +37,23 @@ const Auth = ({ onLogin }: AuthProps) => {
     aadharNumber: "",
     panNumber: "",
   });
+  const [countryCode, setCountryCode] = useState("+91");
   const [isLoginLoading, setIsLoginLoading] = useState(false);
   const [isSignupLoading, setIsSignupLoading] = useState(false);
+
+  // Common country codes
+  const countryCodes = [
+    { code: "+91", country: "India", flag: "🇮🇳" },
+    { code: "+1", country: "USA/Canada", flag: "🇺🇸" },
+    { code: "+44", country: "UK", flag: "🇬🇧" },
+    { code: "+86", country: "China", flag: "🇨🇳" },
+    { code: "+81", country: "Japan", flag: "🇯🇵" },
+    { code: "+82", country: "South Korea", flag: "🇰🇷" },
+    { code: "+65", country: "Singapore", flag: "🇸🇬" },
+    { code: "+971", country: "UAE", flag: "🇦🇪" },
+    { code: "+61", country: "Australia", flag: "🇦🇺" },
+    { code: "+49", country: "Germany", flag: "🇩🇪" },
+  ];
 
   // Helper function to format lockout time
   const formatLockoutTime = (seconds: number) => {
@@ -158,13 +174,16 @@ const Auth = ({ onLogin }: AuthProps) => {
     setIsSignupLoading(true);
     
     try {
+      // Combine country code with phone number
+      const fullPhoneNumber = `${countryCode}${signupData.phoneNumber}`;
+      
       // Call real register API with all required fields
       const response = await authAPI.register({
         email: signupData.email,
         password: signupData.password,
         firstName: signupData.firstName,
         lastName: signupData.lastName,
-        phoneNumber: signupData.phoneNumber,
+        phoneNumber: fullPhoneNumber,
         dateOfBirth: signupData.dateOfBirth,
         // Optional fields
         ...(signupData.address && { address: signupData.address }),
@@ -330,19 +349,37 @@ const Auth = ({ onLogin }: AuthProps) => {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="signup-phone">{t('auth.phoneNumber')} *</Label>
-                    <Input
-                      id="signup-phone"
-                      type="tel"
-                      placeholder={t('auth.phonePlaceholder')}
-                      pattern="^[6-9]\d{9}$"
-                      title={t('auth.phoneValidation')}
-                      value={signupData.phoneNumber}
-                      onChange={(e) =>
-                        setSignupData({ ...signupData, phoneNumber: e.target.value })
-                      }
-                      required
-                      disabled={isSignupLoading}
-                    />
+                    <div className="flex gap-2">
+                      <Select value={countryCode} onValueChange={setCountryCode} disabled={isSignupLoading}>
+                        <SelectTrigger className="w-[140px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {countryCodes.map((country) => (
+                            <SelectItem key={country.code} value={country.code}>
+                              <span className="flex items-center gap-2">
+                                <span>{country.flag}</span>
+                                <span>{country.code}</span>
+                              </span>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        id="signup-phone"
+                        type="tel"
+                        placeholder={countryCode === "+91" ? "9876543210" : t('auth.phonePlaceholder')}
+                        pattern={countryCode === "+91" ? "^[6-9]\\d{9}$" : "^\\d{6,15}$"}
+                        title={countryCode === "+91" ? t('auth.phoneValidation') : "Enter a valid phone number"}
+                        value={signupData.phoneNumber}
+                        onChange={(e) =>
+                          setSignupData({ ...signupData, phoneNumber: e.target.value.replace(/\D/g, '') })
+                        }
+                        required
+                        disabled={isSignupLoading}
+                        className="flex-1"
+                      />
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="signup-dob">{t('auth.dateOfBirth')} *</Label>

@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { FDCalculator } from "@/components/FDCalculator";
 
 const UserDashboard = () => {
   const navigate = useNavigate();
@@ -52,6 +53,39 @@ const UserDashboard = () => {
     endDate: "",
     generating: false,
   });
+
+  // FD Calculator dialog state
+  const [showCalculatorDialog, setShowCalculatorDialog] = useState(false);
+
+  const fetchFDAccounts = async (customerNumber: string) => {
+    try {
+      const fdData = await fdAccountAPI.searchAccounts({ 
+        idType: 'customer_id', 
+        value: customerNumber 
+      });
+      setFdAccounts(Array.isArray(fdData) ? fdData : []);
+    } catch (fdError) {
+      console.error('Failed to fetch FD accounts:', fdError);
+      setFdAccounts([]);
+    }
+  };
+
+  const handleAccountCreated = async () => {
+    // Close calculator dialog
+    setShowCalculatorDialog(false);
+    
+    // Refresh FD accounts
+    const customerNumber = tokenManager.getCustomerNumber();
+    if (customerNumber) {
+      await fetchFDAccounts(customerNumber);
+    }
+    
+    // Show success message
+    toast({
+      title: "Success",
+      description: "Your new FD account has been created successfully!",
+    });
+  };
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -88,16 +122,7 @@ const UserDashboard = () => {
 
             // Fetch FD accounts using customer_id (customerNumber)
             if (customerProfile.customerNumber) {
-              try {
-                const fdData = await fdAccountAPI.searchAccounts({ 
-                  idType: 'customer_id', 
-                  value: customerProfile.customerNumber 
-                });
-                setFdAccounts(Array.isArray(fdData) ? fdData : []);
-              } catch (fdError) {
-                console.error('Failed to fetch FD accounts:', fdError);
-                setFdAccounts([]);
-              }
+              await fetchFDAccounts(customerProfile.customerNumber);
             }
           } catch (error) {
             console.error('Failed to fetch customer profile:', error);
@@ -374,7 +399,10 @@ const UserDashboard = () => {
                   <h2 className="text-2xl font-bold">My Fixed Deposits</h2>
                   <p className="text-muted-foreground">{t('dashboard.fdAccounts')}</p>
                 </div>
-                <Button>Open New FD</Button>
+                <Button onClick={() => setShowCalculatorDialog(true)}>
+                  <TrendingUp className="h-4 w-4 mr-2" />
+                  Open New FD
+                </Button>
               </div>
 
               <div className="space-y-4">
@@ -769,6 +797,22 @@ const UserDashboard = () => {
                 {statementDialog.generating ? t('statement.generating') : t('statement.generate')}
               </Button>
             </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* FD Calculator Dialog */}
+        <Dialog open={showCalculatorDialog} onOpenChange={setShowCalculatorDialog}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Open New Fixed Deposit</DialogTitle>
+              <DialogDescription>
+                Calculate your FD returns and create a new account
+              </DialogDescription>
+            </DialogHeader>
+            <FDCalculator 
+              isEmbedded={true} 
+              onAccountCreated={handleAccountCreated}
+            />
           </DialogContent>
         </Dialog>
       </div>

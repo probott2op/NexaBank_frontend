@@ -19,8 +19,20 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
-export const FDCalculator = () => {
+interface FDCalculatorProps {
+  onAccountCreated?: () => void;
+  isEmbedded?: boolean;
+}
+
+export const FDCalculator = ({ onAccountCreated, isEmbedded = false }: FDCalculatorProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -36,6 +48,8 @@ export const FDCalculator = () => {
   const [isCalculating, setIsCalculating] = useState(false);
   const [isCreatingAccount, setIsCreatingAccount] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [showAccountNameDialog, setShowAccountNameDialog] = useState(false);
+  const [accountName, setAccountName] = useState("");
   const [calculationResult, setCalculationResult] = useState<any>(null);
 
   // Available categories based on backend mapping
@@ -70,6 +84,36 @@ export const FDCalculator = () => {
       }
     };
     fetchProducts();
+  }, []);
+
+  // Check for pending calculation after login
+  useEffect(() => {
+    const pendingCalc = sessionStorage.getItem('pendingFDCalculation');
+    if (pendingCalc && tokenManager.getAccessToken()) {
+      try {
+        const { result, productCode: savedProductCode, timestamp } = JSON.parse(pendingCalc);
+        // Check if calculation is less than 30 minutes old
+        if (Date.now() - timestamp < 30 * 60 * 1000) {
+          setCalculationResult(result);
+          setProductCode(savedProductCode);
+          // Show account name dialog for logged-in user
+          setShowAccountNameDialog(true);
+          // Clear from storage
+          sessionStorage.removeItem('pendingFDCalculation');
+          
+          toast({
+            title: "Welcome back!",
+            description: "Let's create your FD account with your previous calculation",
+          });
+        } else {
+          // Calculation too old, clear it
+          sessionStorage.removeItem('pendingFDCalculation');
+        }
+      } catch (error) {
+        console.error('Failed to restore calculation:', error);
+        sessionStorage.removeItem('pendingFDCalculation');
+      }
+    }
   }, []);
 
   const calculateFD = async () => {
@@ -162,6 +206,13 @@ export const FDCalculator = () => {
         title: t('calculator.calculationComplete'),
         description: t('calculator.calculationCompleteDesc'),
       });
+
+      // Save calculation to sessionStorage for retrieval after login
+      sessionStorage.setItem('pendingFDCalculation', JSON.stringify({
+        result,
+        productCode,
+        timestamp: Date.now()
+      }));
       
     } catch (error: any) {
       console.error("Calculation error:", error);
@@ -183,7 +234,8 @@ export const FDCalculator = () => {
       return;
     }
     
-    createFDAccount();
+    // Show account name dialog
+    setShowAccountNameDialog(true);
   };
 
   const createFDAccount = async () => {
@@ -196,25 +248,45 @@ export const FDCalculator = () => {
       return;
     }
 
+    if (!accountName.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter an account name",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsCreatingAccount(true);
     
     try {
       const userInfo = tokenManager.getUserInfo();
       
-      // Create FD account
+      // Create FD account using calcId and accountName
       const accountData = await fdAccountAPI.createAccount({
-        calculationId: calculationResult.result_id,
-        productCode: productCode,
-        maturityInstruction: "PAYOUT"
+        accountName: accountName.trim(),
+        calcId: calculationResult.result_id || calculationResult.calc_id
       });
 
       toast({
         title: t('calculator.accountCreated'),
         description: t('calculator.accountCreatedDesc', { accountNumber: accountData.accountNumber }),
       });
+
+      // Close dialogs and reset
+      setShowAccountNameDialog(false);
+      setAccountName("");
+      setCalculationResult(null);
+      setPrincipal("");
+      setTenure("");
       
-      // Navigate to dashboard
-      navigate(userInfo.userType === "ADMIN" ? "/admin" : "/dashboard");
+      // Call callback if in embedded mode
+      if (isEmbedded && onAccountCreated) {
+        onAccountCreated();
+      } else {
+        // Navigate to dashboard if not embedded
+        navigate(userInfo.userType === "ADMIN" ? "/admin" : "/dashboard");
+      }
       
     } catch (error: any) {
       toast({
@@ -446,6 +518,49 @@ export const FDCalculator = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Account Name Dialog */}
+      <Dialog open={showAccountNameDialog} onOpenChange={setShowAccountNameDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Name Your Fixed Deposit</DialogTitle>
+            <DialogDescription>
+              Give your FD account a name to easily identify it later
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="accountName">Account Name</Label>
+              <Input
+                id="accountName"
+                placeholder="e.g., Retirement Fund, Child Education, Emergency Savings"
+                value={accountName}
+                onChange={(e) => setAccountName(e.target.value)}
+                disabled={isCreatingAccount}
+                maxLength={100}
+              />
+              <p className="text-sm text-muted-foreground">
+                3-100 characters
+              </p>
+            </div>
+          </div>
+          <div className="flex justify-end gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setShowAccountNameDialog(false)}
+              disabled={isCreatingAccount}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={createFDAccount}
+              disabled={isCreatingAccount || !accountName.trim()}
+            >
+              {isCreatingAccount ? "Creating Account..." : "Create FD Account"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

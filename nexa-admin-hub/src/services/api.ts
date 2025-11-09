@@ -48,17 +48,57 @@ export const tokenManager = {
   }
 };
 
-// Token refresh is handled automatically on 401 errors (after token expires)
-// The backend only accepts refresh token requests AFTER the access token has expired (10 minutes)
-// Not before expiry, so we don't use a proactive refresh interval
+// Auto-refresh token before it expires (access token is valid for 10 minutes)
+let refreshInterval: NodeJS.Timeout | null = null;
+
 export const startTokenRefresh = () => {
-  // No-op: Token refresh happens reactively on 401 errors
-  // Kept for backward compatibility with existing code
+  // Clear any existing interval
+  if (refreshInterval) {
+    clearInterval(refreshInterval);
+  }
+  
+  // Refresh token every 9 minutes (540000 ms) - before the 10-minute expiry
+  refreshInterval = setInterval(async () => {
+    const refreshToken = tokenManager.getRefreshToken();
+    if (refreshToken) {
+      try {
+        const response = await fetch(`${API_URLS.AUTH}/api/auth/refresh`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refreshToken })
+        });
+        
+        if (response.ok) {
+          const result = await response.json();
+          // API returns: { success: true, data: { accessToken, refreshToken, ... }, ... }
+          if (result.success && result.data) {
+            const { accessToken, refreshToken: newRefreshToken, user } = result.data;
+            tokenManager.setTokens(accessToken, newRefreshToken);
+            if (user) {
+              tokenManager.setUserInfo(user);
+            }
+            console.log('Token refreshed successfully at', new Date().toLocaleTimeString());
+          } else {
+            throw new Error('Invalid refresh response');
+          }
+        } else {
+          console.error('Token refresh failed, logging out');
+          tokenManager.clearTokens();
+          window.location.href = '/auth';
+        }
+      } catch (error) {
+        console.error('Token refresh error:', error);
+        // Don't logout on network errors, only on auth failures
+      }
+    }
+  }, 540000); // 9 minutes
 };
 
 export const stopTokenRefresh = () => {
-  // No-op: No interval to clear
-  // Kept for backward compatibility with existing code
+  if (refreshInterval) {
+    clearInterval(refreshInterval);
+    refreshInterval = null;
+  }
 };
 
 // Common fetch wrapper with auth

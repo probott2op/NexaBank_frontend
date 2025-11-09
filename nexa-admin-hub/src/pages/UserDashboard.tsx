@@ -150,6 +150,32 @@ const UserDashboard = () => {
     fetchUserData();
   }, [toast]);
 
+  // Check for pending FD calculation after login
+  useEffect(() => {
+    const pendingCalc = sessionStorage.getItem('pendingFDCalculation');
+    if (pendingCalc && tokenManager.getAccessToken()) {
+      try {
+        const { timestamp } = JSON.parse(pendingCalc);
+        // Check if calculation is less than 30 minutes old
+        if (Date.now() - timestamp < 30 * 60 * 1000) {
+          // Open calculator dialog - the FDCalculator component will handle restoration
+          setShowCalculatorDialog(true);
+          
+          toast({
+            title: "Welcome back!",
+            description: "Let's create your FD account with your previous calculation",
+          });
+        } else {
+          // Calculation too old, clear it
+          sessionStorage.removeItem('pendingFDCalculation');
+        }
+      } catch (error) {
+        console.error('Failed to check pending calculation:', error);
+        sessionStorage.removeItem('pendingFDCalculation');
+      }
+    }
+  }, [toast]);
+
   // Calculate stats from FD accounts
   const totalFDValue = fdAccounts.reduce((sum, fd) => sum + (fd.principalAmount || 0), 0);
   const interestEarned = fdAccounts.reduce((sum, fd) => sum + (fd.interestEarned || 0), 0);

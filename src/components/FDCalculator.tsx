@@ -164,42 +164,8 @@ export const FDCalculator = ({ onAccountCreated, isEmbedded = false }: FDCalcula
         payload.payout_freq = payoutFreq;
       }
 
-      // Call FD Calculation API directly to get proper error response
-      const token = tokenManager.getAccessToken();
-      const response = await fetch('http://localhost:8081/api/fd/calculate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        // Handle error response
-        const errorData = await response.text();
-        console.error("API Error Response:", errorData);
-        
-        let errorMessage = "Failed to calculate FD. Please try again.";
-        
-        try {
-          // Try to parse as JSON
-          const jsonError = JSON.parse(errorData);
-          errorMessage = jsonError.error || jsonError.message || errorData;
-        } catch {
-          // If not JSON, use the text directly
-          errorMessage = errorData || `HTTP Error ${response.status}`;
-        }
-        
-        toast({
-          title: t('calculator.calculationFailed'),
-          description: errorMessage,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const result = await response.json();
+      // Call FD Calculation API using the API service
+      const result = await fdCalcAPI.calculate(payload);
       setCalculationResult(result);
 
       toast({

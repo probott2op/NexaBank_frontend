@@ -1,10 +1,18 @@
+// // API base URLs - configure these based on your deployment
+// const API_URLS = {
+//   AUTH: 'http://localhost:3020', // Authentication Service
+//   FD_CALC: 'http://localhost:8081', // FD Calculator Service  
+//   FD_ACCOUNT: 'http://localhost:9090', // FD Account Management Service
+//   PRODUCT: 'http://localhost:8080', // Product & Pricing Service
+//   CUSTOMER: 'http://localhost:1005', // Customer Profile Service
+// };
 // API base URLs - configure these based on your deployment
 const API_URLS = {
-  AUTH: 'http://localhost:3020', // Authentication Service
-  FD_CALC: 'http://localhost:8081', // FD Calculator Service  
-  FD_ACCOUNT: 'http://localhost:9090', // FD Account Management Service
-  PRODUCT: 'http://localhost:8080', // Product & Pricing Service
-  CUSTOMER: 'http://localhost:1005', // Customer Profile Service
+  AUTH: 'https://login-module-1762524918814.azurewebsites.net', // Authentication Service
+  FD_CALC: 'https://btlab-1762742742313.azurewebsites.net', // FD Calculator Service  
+  FD_ACCOUNT: 'https://demo-1762742911012.azurewebsites.net', // FD Account Management Service
+  PRODUCT: 'https://product-1762742819928.azurewebsites.net', // Product & Pricing Service
+  CUSTOMER: 'https://customer-module-1762592675971.azurewebsites.net', // Customer Profile Service
 };
 
 // Token Management
